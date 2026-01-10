@@ -99,22 +99,26 @@ df_risiko = load_risiko()
 df_evm = load_evm()
 
 # =============================================
-# SIDEBAR NAVIGATION
+# HEADER
 # =============================================
-st.sidebar.title("📊 Menu Dashboard")
-menu = st.sidebar.radio(
-    "Pilih Halaman:",
-    ["🏠 Overview", "👥 Manajemen SDM", "⚠️ Manajemen Risiko", "📈 EVM & Controlling", "📋 Data Dokumen"]
-)
+st.title("📊 Dashboard Monitoring Proyek Office Supplies")
+st.markdown("Sistem manajemen perlengkapan kantor berbasis web")
 
 # =============================================
-# HALAMAN 1: OVERVIEW
+# TAB NAVIGATION (menggantikan sidebar)
 # =============================================
-if menu == "🏠 Overview":
-    st.title("📊 Dashboard Monitoring Proyek")
-    st.markdown("### 🏢 Office Supplies Management System")
-    st.markdown("---")
-    
+tab_overview, tab_sdm, tab_risiko, tab_evm, tab_dokumen = st.tabs([
+    "🏠 Overview", 
+    "👥 SDM", 
+    "⚠️ Risiko", 
+    "📈 EVM", 
+    "📋 Dokumen"
+])
+
+# =============================================
+# TAB 1: OVERVIEW
+# =============================================
+with tab_overview:
     # Metrics
     col1, col2, col3, col4 = st.columns(4)
     
@@ -139,8 +143,6 @@ if menu == "🏠 Overview":
     st.subheader("📈 Progress Keseluruhan")
     st.progress(int(avg_progress) / 100)
     st.markdown(f"**{avg_progress:.1f}%** selesai")
-    
-    st.markdown("---")
     
     # Charts
     col_left, col_right = st.columns(2)
@@ -172,11 +174,10 @@ if menu == "🏠 Overview":
     st.plotly_chart(fig3, use_container_width=True)
 
 # =============================================
-# HALAMAN 2: MANAJEMEN SDM
+# TAB 2: MANAJEMEN SDM
 # =============================================
-elif menu == "👥 Manajemen SDM":
-    st.title("👥 Manajemen Sumber Daya Manusia")
-    st.markdown("---")
+with tab_sdm:
+    st.header("👥 Manajemen Sumber Daya Manusia")
     
     # Tim Overview
     st.subheader("📋 Struktur Tim Proyek")
@@ -221,8 +222,6 @@ elif menu == "👥 Manajemen SDM":
     - 🟢 **I (Informed)**: Diberi informasi
     """)
     
-    st.markdown("---")
-    
     # Workload Chart
     st.subheader("📊 Distribusi Beban Kerja")
     
@@ -238,11 +237,10 @@ elif menu == "👥 Manajemen SDM":
     st.plotly_chart(fig, use_container_width=True)
 
 # =============================================
-# HALAMAN 3: MANAJEMEN RISIKO
+# TAB 3: MANAJEMEN RISIKO
 # =============================================
-elif menu == "⚠️ Manajemen Risiko":
-    st.title("⚠️ Manajemen Risiko Proyek")
-    st.markdown("---")
+with tab_risiko:
+    st.header("⚠️ Manajemen Risiko Proyek")
     
     # Risk Summary
     col1, col2, col3 = st.columns(3)
@@ -257,8 +255,6 @@ elif menu == "⚠️ Manajemen Risiko":
         st.metric("✅ Risiko Mitigated", mitigated)
     with col3:
         st.metric("⚠️ Probabilitas Tinggi", high_prob)
-    
-    st.markdown("---")
     
     # Risk Register Table
     st.subheader("📋 Risk Register")
@@ -282,8 +278,6 @@ elif menu == "⚠️ Manajemen Risiko":
     st.dataframe(df_risiko.style.apply(style_risk, axis=1), 
                  use_container_width=True, hide_index=True)
     
-    st.markdown("---")
-    
     # Risk Matrix
     st.subheader("📊 Matriks Risiko (Probabilitas x Dampak)")
     
@@ -300,8 +294,6 @@ elif menu == "⚠️ Manajemen Risiko":
                      color_discrete_map={'Open': '#dc3545', 'Mitigated': '#28a745'})
     st.plotly_chart(fig, use_container_width=True)
     
-    st.markdown("---")
-    
     # Strategi Respon
     st.subheader("📈 Distribusi Strategi Respon")
     strategi_count = df_risiko['Strategi'].value_counts().reset_index()
@@ -311,11 +303,10 @@ elif menu == "⚠️ Manajemen Risiko":
     st.plotly_chart(fig2, use_container_width=True)
 
 # =============================================
-# HALAMAN 4: EVM & CONTROLLING
+# TAB 4: EVM & CONTROLLING
 # =============================================
-elif menu == "📈 EVM & Controlling":
-    st.title("📈 Earned Value Management & Controlling")
-    st.markdown("---")
+with tab_evm:
+    st.header("📈 Earned Value Management & Controlling")
     
     # Current Week (simulated)
     current_week = 6
@@ -362,8 +353,6 @@ elif menu == "📈 EVM & Controlling":
         st.metric("💹 CPI", f"{CPI:.2f}", cpi_status,
                   delta_color="normal" if CPI >= 1 else "inverse")
     
-    st.markdown("---")
-    
     # EVM Chart
     st.subheader("📈 Grafik EVM (S-Curve)")
     
@@ -388,14 +377,11 @@ elif menu == "📈 EVM & Controlling":
     )
     st.plotly_chart(fig, use_container_width=True)
     
-    st.markdown("---")
-    
     # Forecast
-    st.subheader("🔮 Forecast / Proyeksi")
+    col_forecast1, col_forecast2 = st.columns(2)
     
-    col1, col2 = st.columns(2)
-    
-    with col1:
+    with col_forecast1:
+        st.subheader("🔮 Forecast / Proyeksi")
         st.info(f"""
         **Estimate at Completion (EAC):** Rp {EAC:,.0f}
         
@@ -404,7 +390,8 @@ elif menu == "📈 EVM & Controlling":
         **Interpretasi:** {"Proyek diperkirakan sesuai budget" if VAC >= 0 else f"Proyek diperkirakan over budget Rp {abs(VAC):,.0f}"}
         """)
     
-    with col2:
+    with col_forecast2:
+        st.subheader("🚦 Status RAG")
         # RAG Status
         if SPI >= 0.95 and CPI >= 0.95:
             st.success("🟢 **GREEN** - Proyek berjalan sesuai rencana")
@@ -412,8 +399,6 @@ elif menu == "📈 EVM & Controlling":
             st.warning("🟡 **AMBER** - Proyek memerlukan perhatian")
         else:
             st.error("🔴 **RED** - Proyek memerlukan tindakan korektif segera")
-    
-    st.markdown("---")
     
     # Change Control Log
     st.subheader("📝 Change Request Log")
@@ -429,11 +414,10 @@ elif menu == "📈 EVM & Controlling":
     st.dataframe(pd.DataFrame(cr_data), use_container_width=True, hide_index=True)
 
 # =============================================
-# HALAMAN 5: DATA DOKUMEN
+# TAB 5: DATA DOKUMEN
 # =============================================
-elif menu == "📋 Data Dokumen":
-    st.title("📋 Data Dokumen Proyek")
-    st.markdown("---")
+with tab_dokumen:
+    st.header("📋 Data Dokumen Proyek")
     
     # Filter
     status_filter = st.multiselect("Filter Status:", df_dokumen['Status'].unique(), 
@@ -456,8 +440,6 @@ elif menu == "📋 Data Dokumen":
     st.dataframe(df_display.style.applymap(highlight_status, subset=['Status']),
                  use_container_width=True, hide_index=True)
     
-    st.markdown("---")
-    
     # Deadline Warning
     st.subheader("⚠️ Deadline Terdekat")
     today = datetime.now()
@@ -478,7 +460,7 @@ elif menu == "📋 Data Dokumen":
 # =============================================
 st.markdown("---")
 st.markdown("""
-<div style='text-align: center; color: gray; padding: 20px;'>
+<div style='text-align: center; color: gray; padding: 10px;'>
     📊 Dashboard Monitoring Proyek | Office Supplies Management System<br>
     Mata Kuliah: Manajemen Proyek TI | 2025
 </div>
