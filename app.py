@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 # =============================================
 # KONFIGURASI HALAMAN
@@ -14,46 +14,163 @@ st.set_page_config(
 )
 
 # =============================================
-# DATA
+# KONFIGURASI DATA
 # =============================================
+LOG_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTEpBx0Eg1x3unaxVVQWJVFfzmH9Z8qKQPevp87cnsfP-nhyNYfhQvVc3Vpd0sDfkNRaNs7R4VH1nOa/pub?gid=1285157492&single=true&output=csv"
 
-# Data Dokumen
-@st.cache_data
-def load_dokumen():
-    data = {
-        'No': [1, 2, 3, 4, 5, 6, 7, 8],
-        'Nama Dokumen': [
-            'Project Charter', 'SRS', 'ERD Database', 'Use Case Diagram',
-            'Wireframe UI/UX', 'Gantt Chart', 'Risk Register', 'User Manual'
-        ],
-        'Fase': [
-            'Inisiasi', 'Perencanaan', 'Perencanaan', 'Perencanaan',
-            'Perencanaan', 'Perencanaan', 'Perencanaan', 'Penutupan'
-        ],
-        'Status': ['Selesai', 'Proses', 'Proses', 'Belum', 'Belum', 'Selesai', 'Proses', 'Belum'],
-        'PIC': ['Andi', 'Budi', 'Citra', 'Dani', 'Eka', 'Andi', 'Budi', 'Citra'],
-        'Deadline': ['2025-01-10', '2025-01-20', '2025-01-25', '2025-01-30',
-                     '2025-02-05', '2025-01-15', '2025-01-28', '2025-03-01'],
-        'Progress': [100, 75, 50, 0, 0, 100, 60, 0]
+PROJECT_START = date(2025, 11, 10)  # minggu ke-1 dimulai 10 Nov 2025
+
+BASELINE = [
+    {"document": "Project Charter", "phase": "Inisiasi", "pic_role": "PM", "target_week": 1},
+    {"document": "Gantt Chart / Schedule", "phase": "Perencanaan", "pic_role": "PM", "target_week": 2},
+    {"document": "SRS", "phase": "Perencanaan", "pic_role": "BA/SA", "target_week": 3},
+    {"document": "Use Case Diagram + Deskripsi", "phase": "Perencanaan", "pic_role": "BA/SA", "target_week": 4},
+    {"document": "ERD + Data Dictionary", "phase": "Perencanaan", "pic_role": "Backend/DB", "target_week": 5},
+    {"document": "Wireframe / Mockup UI", "phase": "Perencanaan", "pic_role": "UI/UX", "target_week": 6},
+    {"document": "Risk Register", "phase": "Controlling", "pic_role": "PM", "target_week": 6},
+    {"document": "User Manual", "phase": "Penutupan", "pic_role": "BA/SA", "target_week": 11},
+]
+
+STATUS_ORDER = ["Belum", "Proses", "Selesai"]
+STATUS_COLORS = {"Selesai": "#28a745", "Proses": "#ffc107", "Belum": "#dc3545"}
+
+# =============================================
+# HELPER FUNCTIONS
+# =============================================
+def normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
+    df = df.copy()
+    df.columns = [c.strip().lower() for c in df.columns]
+    rename_map = {
+        "week": "week_no",
+        "mingguke": "week_no",
+        "minggu_ke": "week_no",
+        "doc": "document",
+        "nama dokumen": "document",
+        "fase": "phase",
+        "pic": "pic_role",
+        "role": "pic_role",
+        "updatedby": "updated_by",
+        "catatan": "notes",
     }
-    df = pd.DataFrame(data)
-    df['Deadline'] = pd.to_datetime(df['Deadline'])
+    df = df.rename(columns={k: v for k, v in rename_map.items() if k in df.columns})
     return df
 
-# Data Tim (RACI)
+
+@st.cache_data(ttl=60)
+def load_log(url: str) -> pd.DataFrame:
+    df = pd.read_csv(url)
+    df = normalize_columns(df)
+    
+    required = {"timestamp", "week_no", "document", "status", "progress"}
+    missing = required - set(df.columns)
+    if missing:
+        raise ValueError(f"Kolom wajib tidak ditemukan: {missing}. Tersedia: {list(df.columns)}")
+    
+    df["timestamp"] = pd.to_datetime(df["timestamp"], errors="coerce")
+    if "week_start" in df.columns:
+        df["week_start"] = pd.to_datetime(df["week_start"], errors="coerce")
+    
+    df["week_no"] = pd.to_numeric(df["week_no"], errors="coerce")
+    df["progress"] = pd.to_numeric(df["progress"], errors="coerce")
+    
+    df["status"] = df["status"].astype(str).str.strip().str.title()
+    df.loc[~df["status"].isin(STATUS_ORDER), "status"] = "Proses"
+    df["document"] = df["document"].astype(str).str.strip()
+    
+    return df.dropna(subset=["week_no", "document"])
+
+
+def compute_current_week(project_start: date) -> int:
+    today = date.today()
+    delta_days = (today - project_start).days
+    if delta_days < 0:
+        return 1
+    return min(12, max(1, delta_days // 7 + 1))
+
+
+def get_latest_status(df_log: pd.DataFrame, df_baseline: pd.DataFrame) -> pd.DataFrame:
+    """Ambil status terbaru per dokumen dari log, gabungkan dengan baseline."""
+    df_latest = (
+        df_log.sort_values("timestamp", ascending=True)
+              .groupby("document", as_index=False)
+              .tail(1)
+    )
+    
+    df_merged = df_baseline.merge(df_latest, on="document", how="left", suffixes=("_base", "_log"))
+    
+    # Fallback jika belum ada log
+    if "phase_base" in df_merged.columns:
+        df_merged["phase"] = df_merged["phase"].fillna(df_merged["phase_base"])
+    if "pic_role_base" in df_merged.columns:
+        df_merged["pic_role"] = df_merged["pic_role"].fillna(df_merged["pic_role_base"])
+    
+    df_merged["status"] = df_merged["status"].fillna("Belum")
+    df_merged["progress"] = df_merged["progress"].fillna(0)
+    
+    return df_merged
+
+
+# =============================================
+# LOAD DATA
+# =============================================
+st.title("📊 Dashboard Monitoring Proyek Office Supplies")
+st.markdown("Sistem manajemen perlengkapan kantor berbasis web")
+
+# Load log dari Google Sheets
+try:
+    df_log = load_log(LOG_URL)
+    data_loaded = True
+except Exception as e:
+    st.error(f"⚠️ Gagal load data dari Google Sheets: {e}")
+    st.info("Menggunakan data baseline saja (tanpa log histori)")
+    df_log = pd.DataFrame(columns=["timestamp", "week_no", "document", "status", "progress", "pic_role", "updated_by", "notes"])
+    data_loaded = False
+
+# Baseline dokumen
+df_baseline = pd.DataFrame(BASELINE)
+df_baseline["target_date"] = df_baseline["target_week"].apply(
+    lambda w: PROJECT_START + timedelta(days=(w - 1) * 7)
+)
+
+# Latest status per dokumen
+df_dokumen = get_latest_status(df_log, df_baseline)
+
+# Current week
+auto_week = compute_current_week(PROJECT_START)
+
+# =============================================
+# DATA TIM (RACI) - berbasis Role
+# =============================================
 @st.cache_data
 def load_tim():
     data = {
-        'Nama': ['Andi', 'Budi', 'Citra', 'Dani', 'Eka'],
-        'Role': ['Project Manager', 'System Analyst', 'Database Designer', 'Developer', 'UI/UX Designer'],
-        'Skill': ['Leadership, Planning', 'Analysis, Documentation', 'Database, SQL', 'Python, Laravel', 'Figma, CSS'],
-        'Tugas Selesai': [2, 1, 0, 0, 0],
-        'Tugas Proses': [0, 2, 1, 0, 0],
-        'Tugas Belum': [0, 0, 1, 1, 1]
+        'Role': ['PM', 'BA/SA', 'UI/UX', 'Backend/DB'],
+        'Deskripsi': [
+            'Project Manager - Penanggung jawab proyek',
+            'Business/System Analyst - Analisis & dokumentasi',
+            'UI/UX Designer - Desain antarmuka',
+            'Backend/Database Engineer - Database & sistem'
+        ],
+        'Skill': [
+            'Leadership, Planning, Risk Management',
+            'Analysis, Documentation, Communication',
+            'Figma, CSS, User Research',
+            'Database, SQL, Python/Laravel'
+        ],
+        'Dokumen Ditangani': [
+            'Project Charter, Gantt Chart, Risk Register',
+            'SRS, Use Case, User Manual',
+            'Wireframe / Mockup UI',
+            'ERD + Data Dictionary'
+        ]
     }
     return pd.DataFrame(data)
 
-# Data Risiko
+df_tim = load_tim()
+
+# =============================================
+# DATA RISIKO
+# =============================================
 @st.cache_data
 def load_risiko():
     data = {
@@ -82,51 +199,56 @@ def load_risiko():
     }
     return pd.DataFrame(data)
 
-# Data EVM
+df_risiko = load_risiko()
+
+# =============================================
+# DATA EVM
+# =============================================
 @st.cache_data
 def load_evm():
     data = {
-        'Minggu': [1, 2, 3, 4, 5, 6, 7, 8],
-        'PV': [40000, 80000, 140000, 200000, 280000, 360000, 440000, 500000],
-        'EV': [40000, 75000, 130000, 185000, 260000, 340000, 0, 0],
-        'AC': [45000, 90000, 150000, 210000, 295000, 380000, 0, 0]
+        'Minggu': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+        'PV': [40000, 80000, 130000, 180000, 240000, 300000, 360000, 410000, 450000, 480000, 500000, 500000],
+        'EV': [40000, 75000, 125000, 170000, 230000, 290000, 0, 0, 0, 0, 0, 0],
+        'AC': [45000, 85000, 140000, 195000, 260000, 330000, 0, 0, 0, 0, 0, 0]
     }
     return pd.DataFrame(data)
 
-df_dokumen = load_dokumen()
-df_tim = load_tim()
-df_risiko = load_risiko()
 df_evm = load_evm()
 
 # =============================================
-# HEADER
+# TAB NAVIGATION
 # =============================================
-st.title("📊 Dashboard Monitoring Proyek Office Supplies")
-st.markdown("Sistem manajemen perlengkapan kantor berbasis web")
-
-# =============================================
-# TAB NAVIGATION (menggantikan sidebar)
-# =============================================
-tab_overview, tab_sdm, tab_risiko, tab_evm, tab_dokumen = st.tabs([
+tab_overview, tab_sdm, tab_risiko, tab_evm, tab_dokumen, tab_log = st.tabs([
     "🏠 Overview", 
     "👥 SDM", 
     "⚠️ Risiko", 
     "📈 EVM", 
-    "📋 Dokumen"
+    "📋 Dokumen",
+    "🧾 Log Histori"
 ])
 
 # =============================================
 # TAB 1: OVERVIEW
 # =============================================
 with tab_overview:
-    # Metrics
-    col1, col2, col3, col4 = st.columns(4)
+    # Minggu saat ini
+    current_week = st.number_input("📅 Minggu saat ini", min_value=1, max_value=12, value=auto_week, step=1)
     
+    st.markdown("---")
+    
+    # Metrics
     total = len(df_dokumen)
-    selesai = len(df_dokumen[df_dokumen['Status'] == 'Selesai'])
-    proses = len(df_dokumen[df_dokumen['Status'] == 'Proses'])
-    belum = len(df_dokumen[df_dokumen['Status'] == 'Belum'])
-    avg_progress = df_dokumen['Progress'].mean()
+    selesai = int((df_dokumen['status'] == 'Selesai').sum())
+    proses = int((df_dokumen['status'] == 'Proses').sum())
+    belum = int((df_dokumen['status'] == 'Belum').sum())
+    avg_progress = float(df_dokumen['progress'].mean())
+    
+    # Overdue calculation
+    df_dokumen["overdue"] = (current_week > df_dokumen["target_week"]) & (df_dokumen["status"] != "Selesai")
+    overdue_count = int(df_dokumen["overdue"].sum())
+    
+    col1, col2, col3, col4, col5 = st.columns(5)
     
     with col1:
         st.metric("📄 Total Dokumen", total)
@@ -136,42 +258,53 @@ with tab_overview:
         st.metric("🔄 Proses", proses, f"{(proses/total)*100:.0f}%")
     with col4:
         st.metric("⏳ Belum", belum, f"-{(belum/total)*100:.0f}%", delta_color="inverse")
+    with col5:
+        st.metric("⚠️ Overdue", overdue_count, delta_color="inverse" if overdue_count > 0 else "off")
     
     st.markdown("---")
     
     # Progress Bar
     st.subheader("📈 Progress Keseluruhan")
     st.progress(int(avg_progress) / 100)
-    st.markdown(f"**{avg_progress:.1f}%** selesai")
+    st.markdown(f"**{avg_progress:.1f}%** rata-rata progress dokumen")
     
     # Charts
     col_left, col_right = st.columns(2)
     
     with col_left:
         st.subheader("📊 Status Dokumen (RAG)")
-        status_count = df_dokumen['Status'].value_counts().reset_index()
+        status_count = df_dokumen['status'].value_counts().reindex(STATUS_ORDER, fill_value=0).reset_index()
         status_count.columns = ['Status', 'Jumlah']
-        colors = {'Selesai': '#28a745', 'Proses': '#ffc107', 'Belum': '#dc3545'}
         fig = px.pie(status_count, values='Jumlah', names='Status', 
-                     color='Status', color_discrete_map=colors, hole=0.4)
+                     color='Status', color_discrete_map=STATUS_COLORS, hole=0.4)
         st.plotly_chart(fig, use_container_width=True)
     
     with col_right:
-        st.subheader("👥 Beban Kerja per PIC")
-        pic_count = df_dokumen.groupby('PIC').size().reset_index(name='Jumlah Tugas')
-        fig2 = px.bar(pic_count, x='PIC', y='Jumlah Tugas', color='Jumlah Tugas',
+        st.subheader("👥 Beban Kerja per Role (PIC)")
+        role_count = df_dokumen.groupby('pic_role').size().reset_index(name='Jumlah Tugas')
+        fig2 = px.bar(role_count, x='pic_role', y='Jumlah Tugas', color='Jumlah Tugas',
                       color_continuous_scale='Blues', text='Jumlah Tugas')
         fig2.update_traces(textposition='outside')
         st.plotly_chart(fig2, use_container_width=True)
     
     # Progress per dokumen
     st.subheader("📋 Progress Setiap Dokumen")
-    fig3 = px.bar(df_dokumen.sort_values('Progress', ascending=True),
-                  x='Progress', y='Nama Dokumen', orientation='h',
-                  color='Status', color_discrete_map=colors, text='Progress')
-    fig3.update_traces(texttemplate='%{text}%', textposition='outside')
-    fig3.update_layout(xaxis_range=[0, 110])
+    fig3 = px.bar(df_dokumen.sort_values('progress', ascending=True),
+                  x='progress', y='document', orientation='h',
+                  color='status', color_discrete_map=STATUS_COLORS, text='progress')
+    fig3.update_traces(texttemplate='%{text:.0f}%', textposition='outside')
+    fig3.update_layout(xaxis_range=[0, 110], height=400)
     st.plotly_chart(fig3, use_container_width=True)
+    
+    # Overdue Warning
+    st.subheader("⚠️ Dokumen Overdue (berdasarkan target minggu)")
+    overdue_df = df_dokumen[df_dokumen["overdue"]].copy()
+    if overdue_df.empty:
+        st.success("✅ Tidak ada dokumen overdue. Semua sesuai jadwal!")
+    else:
+        for _, row in overdue_df.iterrows():
+            weeks_late = current_week - row["target_week"]
+            st.error(f"🔴 **{row['document']}** - Terlambat {weeks_late} minggu (target: minggu {row['target_week']}) - PIC: {row['pic_role']}")
 
 # =============================================
 # TAB 2: MANAJEMEN SDM
@@ -180,7 +313,7 @@ with tab_sdm:
     st.header("👥 Manajemen Sumber Daya Manusia")
     
     # Tim Overview
-    st.subheader("📋 Struktur Tim Proyek")
+    st.subheader("📋 Struktur Tim Proyek (Berbasis Role)")
     st.dataframe(df_tim, use_container_width=True, hide_index=True)
     
     st.markdown("---")
@@ -189,13 +322,20 @@ with tab_sdm:
     st.subheader("📊 Matriks RACI")
     
     raci_data = {
-        'Dokumen': ['Project Charter', 'SRS', 'ERD Database', 'Use Case', 
-                    'Wireframe UI', 'Gantt Chart', 'Risk Register', 'User Manual'],
-        'Andi': ['A', 'C', 'I', 'I', 'I', 'R/A', 'C', 'I'],
-        'Budi': ['C', 'R/A', 'C', 'C', 'I', 'C', 'R/A', 'C'],
-        'Citra': ['I', 'C', 'R/A', 'C', 'C', 'I', 'C', 'R/A'],
-        'Dani': ['I', 'I', 'I', 'R/A', 'C', 'I', 'I', 'I'],
-        'Eka': ['I', 'I', 'I', 'C', 'R/A', 'I', 'I', 'I']
+        'Dokumen': [
+            'Project Charter', 
+            'Gantt Chart / Schedule', 
+            'SRS', 
+            'Use Case Diagram + Deskripsi', 
+            'ERD + Data Dictionary',
+            'Wireframe / Mockup UI', 
+            'Risk Register', 
+            'User Manual'
+        ],
+        'PM': ['R/A', 'R/A', 'C', 'C', 'I', 'I', 'R/A', 'C'],
+        'BA/SA': ['C', 'C', 'R/A', 'R/A', 'C', 'C', 'C', 'R/A'],
+        'UI/UX': ['I', 'I', 'C', 'C', 'I', 'R/A', 'I', 'I'],
+        'Backend/DB': ['I', 'I', 'C', 'C', 'R/A', 'I', 'I', 'C']
     }
     df_raci = pd.DataFrame(raci_data)
     
@@ -211,28 +351,41 @@ with tab_sdm:
             return 'background-color: #95e1d3; color: black'
         return ''
     
-    st.dataframe(df_raci.style.applymap(style_raci, subset=['Andi', 'Budi', 'Citra', 'Dani', 'Eka']),
+    st.dataframe(df_raci.style.applymap(style_raci, subset=['PM', 'BA/SA', 'UI/UX', 'Backend/DB']),
                  use_container_width=True, hide_index=True)
     
     st.markdown("""
     **Keterangan:**
-    - 🔴 **A (Accountable)**: Penanggung jawab utama
+    - 🔴 **R/A (Responsible/Accountable)**: Pelaksana & penanggung jawab utama
     - 🟢 **R (Responsible)**: Pelaksana tugas
     - 🟡 **C (Consulted)**: Dimintai pendapat
     - 🟢 **I (Informed)**: Diberi informasi
     """)
     
+    st.markdown("---")
+    
     # Workload Chart
-    st.subheader("📊 Distribusi Beban Kerja")
+    st.subheader("📊 Distribusi Beban Kerja per Role")
     
-    workload = df_tim[['Nama', 'Tugas Selesai', 'Tugas Proses', 'Tugas Belum']]
-    workload_melted = workload.melt(id_vars=['Nama'], var_name='Status', value_name='Jumlah')
+    # Hitung tugas per role dari data dokumen
+    workload_data = []
+    for role in ['PM', 'BA/SA', 'UI/UX', 'Backend/DB']:
+        role_docs = df_dokumen[df_dokumen['pic_role'] == role]
+        workload_data.append({
+            'Role': role,
+            'Selesai': int((role_docs['status'] == 'Selesai').sum()),
+            'Proses': int((role_docs['status'] == 'Proses').sum()),
+            'Belum': int((role_docs['status'] == 'Belum').sum())
+        })
     
-    fig = px.bar(workload_melted, x='Nama', y='Jumlah', color='Status',
+    df_workload = pd.DataFrame(workload_data)
+    workload_melted = df_workload.melt(id_vars=['Role'], var_name='Status', value_name='Jumlah')
+    
+    fig = px.bar(workload_melted, x='Role', y='Jumlah', color='Status',
                  barmode='stack', color_discrete_map={
-                     'Tugas Selesai': '#28a745',
-                     'Tugas Proses': '#ffc107',
-                     'Tugas Belum': '#dc3545'
+                     'Selesai': '#28a745',
+                     'Proses': '#ffc107',
+                     'Belum': '#dc3545'
                  })
     st.plotly_chart(fig, use_container_width=True)
 
@@ -256,16 +409,20 @@ with tab_risiko:
     with col3:
         st.metric("⚠️ Probabilitas Tinggi", high_prob)
     
+    st.markdown("---")
+    
     # Risk Register Table
     st.subheader("📋 Risk Register")
     
     def style_risk(row):
         styles = [''] * len(row)
+        # Status Risiko column (index 7)
         if row['Status Risiko'] == 'Open':
-            styles[6] = 'background-color: #ffcccc'
+            styles[7] = 'background-color: #ffcccc'
         else:
-            styles[6] = 'background-color: #ccffcc'
+            styles[7] = 'background-color: #ccffcc'
         
+        # Probabilitas column (index 2)
         if row['Probabilitas'] == 'Tinggi':
             styles[2] = 'background-color: #ff6b6b; color: white'
         elif row['Probabilitas'] == 'Sedang':
@@ -278,29 +435,25 @@ with tab_risiko:
     st.dataframe(df_risiko.style.apply(style_risk, axis=1), 
                  use_container_width=True, hide_index=True)
     
-    # Risk Matrix
-    st.subheader("📊 Matriks Risiko (Probabilitas x Dampak)")
+    st.markdown("---")
     
-    # Heatmap data
-    risk_matrix = pd.DataFrame({
-        'Probabilitas': ['Tinggi', 'Tinggi', 'Sedang', 'Sedang', 'Rendah', 'Rendah'],
-        'Dampak': ['Tinggi', 'Sedang', 'Tinggi', 'Sedang', 'Tinggi', 'Sedang'],
-        'Jumlah': [0, 1, 2, 1, 2, 0]
-    })
+    # Charts
+    col_left, col_right = st.columns(2)
     
-    fig = px.scatter(df_risiko, x='Dampak', y='Probabilitas', 
-                     size='Skor', color='Status Risiko',
-                     hover_name='Risiko', size_max=40,
-                     color_discrete_map={'Open': '#dc3545', 'Mitigated': '#28a745'})
-    st.plotly_chart(fig, use_container_width=True)
+    with col_left:
+        st.subheader("📊 Matriks Risiko")
+        fig = px.scatter(df_risiko, x='Dampak', y='Probabilitas', 
+                         size='Skor', color='Status Risiko',
+                         hover_name='Risiko', size_max=40,
+                         color_discrete_map={'Open': '#dc3545', 'Mitigated': '#28a745'})
+        st.plotly_chart(fig, use_container_width=True)
     
-    # Strategi Respon
-    st.subheader("📈 Distribusi Strategi Respon")
-    strategi_count = df_risiko['Strategi'].value_counts().reset_index()
-    strategi_count.columns = ['Strategi', 'Jumlah']
-    
-    fig2 = px.pie(strategi_count, values='Jumlah', names='Strategi', hole=0.3)
-    st.plotly_chart(fig2, use_container_width=True)
+    with col_right:
+        st.subheader("📈 Distribusi Strategi Respon")
+        strategi_count = df_risiko['Strategi'].value_counts().reset_index()
+        strategi_count.columns = ['Strategi', 'Jumlah']
+        fig2 = px.pie(strategi_count, values='Jumlah', names='Strategi', hole=0.3)
+        st.plotly_chart(fig2, use_container_width=True)
 
 # =============================================
 # TAB 4: EVM & CONTROLLING
@@ -308,24 +461,33 @@ with tab_risiko:
 with tab_evm:
     st.header("📈 Earned Value Management & Controlling")
     
-    # Current Week (simulated)
-    current_week = 6
+    # Current Week (from overview)
+    current_week_evm = st.number_input("Minggu evaluasi EVM", min_value=1, max_value=12, value=min(6, auto_week), step=1, key="evm_week")
     
     # Calculate EVM metrics
     BAC = 500000
-    PV = df_evm[df_evm['Minggu'] <= current_week]['PV'].iloc[-1]
-    EV = df_evm[df_evm['Minggu'] <= current_week]['EV'].iloc[-1]
-    AC = df_evm[df_evm['Minggu'] <= current_week]['AC'].iloc[-1]
+    df_evm_current = df_evm[df_evm['Minggu'] <= current_week_evm]
     
-    SV = EV - PV
-    CV = EV - AC
-    SPI = EV / PV if PV > 0 else 0
-    CPI = EV / AC if AC > 0 else 0
-    EAC = BAC / CPI if CPI > 0 else BAC
-    VAC = BAC - EAC
+    if len(df_evm_current) > 0 and df_evm_current['EV'].iloc[-1] > 0:
+        PV = df_evm_current['PV'].iloc[-1]
+        EV = df_evm_current['EV'].iloc[-1]
+        AC = df_evm_current['AC'].iloc[-1]
+        
+        SV = EV - PV
+        CV = EV - AC
+        SPI = EV / PV if PV > 0 else 0
+        CPI = EV / AC if AC > 0 else 0
+        EAC = BAC / CPI if CPI > 0 else BAC
+        VAC = BAC - EAC
+    else:
+        st.warning("Data EVM belum tersedia untuk minggu ini.")
+        PV, EV, AC = 0, 0, 0
+        SV, CV, SPI, CPI, EAC, VAC = 0, 0, 0, 0, BAC, 0
+    
+    st.markdown("---")
     
     # Metrics Display
-    st.subheader(f"📊 Status Proyek (Minggu ke-{current_week})")
+    st.subheader(f"📊 Status Proyek (Minggu ke-{current_week_evm})")
     
     col1, col2, col3, col4 = st.columns(4)
     
@@ -353,19 +515,19 @@ with tab_evm:
         st.metric("💹 CPI", f"{CPI:.2f}", cpi_status,
                   delta_color="normal" if CPI >= 1 else "inverse")
     
+    st.markdown("---")
+    
     # EVM Chart
     st.subheader("📈 Grafik EVM (S-Curve)")
-    
-    df_evm_plot = df_evm[df_evm['Minggu'] <= current_week]
     
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=df_evm['Minggu'], y=df_evm['PV'], 
                              mode='lines+markers', name='Planned Value (PV)',
                              line=dict(color='blue', dash='dash')))
-    fig.add_trace(go.Scatter(x=df_evm_plot['Minggu'], y=df_evm_plot['EV'], 
+    fig.add_trace(go.Scatter(x=df_evm_current['Minggu'], y=df_evm_current['EV'], 
                              mode='lines+markers', name='Earned Value (EV)',
                              line=dict(color='green')))
-    fig.add_trace(go.Scatter(x=df_evm_plot['Minggu'], y=df_evm_plot['AC'], 
+    fig.add_trace(go.Scatter(x=df_evm_current['Minggu'], y=df_evm_current['AC'], 
                              mode='lines+markers', name='Actual Cost (AC)',
                              line=dict(color='red')))
     
@@ -377,7 +539,7 @@ with tab_evm:
     )
     st.plotly_chart(fig, use_container_width=True)
     
-    # Forecast
+    # Forecast & RAG
     col_forecast1, col_forecast2 = st.columns(2)
     
     with col_forecast1:
@@ -392,7 +554,6 @@ with tab_evm:
     
     with col_forecast2:
         st.subheader("🚦 Status RAG")
-        # RAG Status
         if SPI >= 0.95 and CPI >= 0.95:
             st.success("🟢 **GREEN** - Proyek berjalan sesuai rencana")
         elif SPI >= 0.8 and CPI >= 0.8:
@@ -400,13 +561,14 @@ with tab_evm:
         else:
             st.error("🔴 **RED** - Proyek memerlukan tindakan korektif segera")
     
+    st.markdown("---")
+    
     # Change Control Log
     st.subheader("📝 Change Request Log")
-    
     cr_data = {
         'CR ID': ['CR-001', 'CR-002'],
         'Deskripsi': ['Penambahan fitur notifikasi email', 'Perubahan desain UI dashboard'],
-        'Diajukan': ['2025-01-15', '2025-01-18'],
+        'Diajukan': ['2025-11-20', '2025-11-25'],
         'Status': ['Approved', 'Pending Review'],
         'Dampak Biaya': ['Rp 50.000', 'Rp 0'],
         'Dampak Waktu': ['+3 hari', '+1 hari']
@@ -420,9 +582,17 @@ with tab_dokumen:
     st.header("📋 Data Dokumen Proyek")
     
     # Filter
-    status_filter = st.multiselect("Filter Status:", df_dokumen['Status'].unique(), 
-                                   default=df_dokumen['Status'].unique())
-    df_filtered = df_dokumen[df_dokumen['Status'].isin(status_filter)]
+    col_filter1, col_filter2 = st.columns(2)
+    with col_filter1:
+        status_filter = st.multiselect("Filter Status:", STATUS_ORDER, default=STATUS_ORDER)
+    with col_filter2:
+        role_list = sorted(df_dokumen['pic_role'].dropna().unique().tolist())
+        role_filter = st.multiselect("Filter PIC Role:", role_list, default=role_list)
+    
+    df_filtered = df_dokumen[
+        (df_dokumen['status'].isin(status_filter)) & 
+        (df_dokumen['pic_role'].isin(role_filter))
+    ].copy()
     
     # Table
     def highlight_status(val):
@@ -433,27 +603,80 @@ with tab_dokumen:
         else:
             return 'background-color: #f8d7da; color: #721c24'
     
-    df_display = df_filtered.copy()
-    df_display['Deadline'] = df_display['Deadline'].dt.strftime('%d/%m/%Y')
-    df_display['Progress'] = df_display['Progress'].astype(str) + '%'
+    # Prepare display columns
+    display_cols = ['document', 'phase', 'pic_role', 'target_week', 'target_date', 'status', 'progress']
+    if 'timestamp' in df_filtered.columns:
+        display_cols.append('timestamp')
+    if 'notes' in df_filtered.columns:
+        display_cols.append('notes')
     
-    st.dataframe(df_display.style.applymap(highlight_status, subset=['Status']),
+    df_display = df_filtered[display_cols].copy()
+    df_display['target_date'] = pd.to_datetime(df_display['target_date']).dt.strftime('%d/%m/%Y')
+    df_display['progress'] = df_display['progress'].astype(int).astype(str) + '%'
+    
+    st.dataframe(df_display.style.applymap(highlight_status, subset=['status']),
                  use_container_width=True, hide_index=True)
     
-    # Deadline Warning
-    st.subheader("⚠️ Deadline Terdekat")
-    today = datetime.now()
-    df_upcoming = df_dokumen[(df_dokumen['Status'] != 'Selesai') & 
-                             (df_dokumen['Deadline'] >= today)].sort_values('Deadline')
+    st.markdown("---")
     
-    for _, row in df_upcoming.head(5).iterrows():
-        days_left = (row['Deadline'] - today).days
-        if days_left <= 7:
-            st.error(f"🔴 **{row['Nama Dokumen']}** - {days_left} hari lagi - PIC: {row['PIC']}")
-        elif days_left <= 14:
-            st.warning(f"🟡 **{row['Nama Dokumen']}** - {days_left} hari lagi - PIC: {row['PIC']}")
-        else:
-            st.info(f"🔵 **{row['Nama Dokumen']}** - {days_left} hari lagi - PIC: {row['PIC']}")
+    # Deadline Warning (berdasarkan target minggu)
+    st.subheader("⚠️ Target Deadline Terdekat")
+    
+    current_week_dok = auto_week
+    df_upcoming = df_dokumen[
+        (df_dokumen['status'] != 'Selesai') & 
+        (df_dokumen['target_week'] >= current_week_dok)
+    ].sort_values('target_week')
+    
+    if df_upcoming.empty:
+        st.success("✅ Semua dokumen sudah selesai atau tidak ada deadline mendatang.")
+    else:
+        for _, row in df_upcoming.head(5).iterrows():
+            weeks_left = row['target_week'] - current_week_dok
+            if weeks_left <= 0:
+                st.error(f"🔴 **{row['document']}** - Target minggu {row['target_week']} (sekarang!) - PIC: {row['pic_role']}")
+            elif weeks_left <= 1:
+                st.warning(f"🟡 **{row['document']}** - Target minggu {row['target_week']} ({weeks_left} minggu lagi) - PIC: {row['pic_role']}")
+            else:
+                st.info(f"🔵 **{row['document']}** - Target minggu {row['target_week']} ({weeks_left} minggu lagi) - PIC: {row['pic_role']}")
+
+# =============================================
+# TAB 6: LOG HISTORI
+# =============================================
+with tab_log:
+    st.header("🧾 Log Histori (Audit Trail)")
+    
+    if not data_loaded or df_log.empty:
+        st.warning("⚠️ Belum ada data log histori. Submit update via Google Form untuk mulai mencatat.")
+    else:
+        # Filter minggu
+        max_week = int(df_log["week_no"].max()) if df_log["week_no"].notna().any() else 1
+        week_options = list(range(1, max_week + 1))
+        week_pick = st.multiselect("Filter minggu", week_options, default=[max_week])
+        
+        df_view = df_log[df_log["week_no"].isin(week_pick)].copy()
+        
+        # Summary
+        col1, col2, col3 = st.columns(3)
+        col1.metric("📝 Total update (filter)", len(df_view))
+        col2.metric("📄 Dokumen diupdate", df_view["document"].nunique())
+        col3.metric("📊 Total semua log", len(df_log))
+        
+        st.markdown("---")
+        
+        # Tabel log
+        show_cols = [c for c in ["timestamp", "email", "week_no", "week_start", "document", "phase", "status", "progress", "pic_role", "updated_by", "notes"] if c in df_view.columns]
+        st.dataframe(df_view.sort_values("timestamp", ascending=False)[show_cols], use_container_width=True, hide_index=True)
+        
+        st.markdown("---")
+        
+        # Chart aktivitas mingguan
+        st.subheader("📈 Aktivitas Update per Minggu")
+        week_counts = df_log.groupby("week_no").size().reset_index(name="jumlah_update")
+        fig = px.bar(week_counts, x="week_no", y="jumlah_update", text="jumlah_update")
+        fig.update_traces(textposition='outside')
+        fig.update_layout(xaxis_title="Minggu ke-", yaxis_title="Jumlah update", height=350)
+        st.plotly_chart(fig, use_container_width=True)
 
 # =============================================
 # FOOTER
@@ -462,6 +685,7 @@ st.markdown("---")
 st.markdown("""
 <div style='text-align: center; color: gray; padding: 10px;'>
     📊 Dashboard Monitoring Proyek | Office Supplies Management System<br>
-    Mata Kuliah: Manajemen Proyek TI | 2025
+    Mata Kuliah: Manajemen Proyek TI | 2025<br>
+    Data: Google Form (Log Histori) + Baseline Target Mingguan (Start: 10 Nov 2025)
 </div>
 """, unsafe_allow_html=True)
