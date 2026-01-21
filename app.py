@@ -529,7 +529,7 @@ CHART_AXIS = dict(
 # Header
 st.markdown("""
 <div class="dashboard-header">
-    <h1>📊 Project Monitoring Dashboard</h1>
+    <h1>Project Monitoring Dashboard</h1>
     <p>Office Supplies Management System — Real-time project tracking</p>
 </div>
 """, unsafe_allow_html=True)
@@ -977,6 +977,6 @@ with tabs[5]:
 st.markdown("---")
 st.markdown("""
 <div style="text-align: center; color: #64748B; font-size: 0.95rem; padding: 1rem 0;">
-    📊 <strong>Project Monitoring Dashboard</strong> | Office Supplies Management System | © 2025
+    <strong>Manajemen Proyek - Rizki FErmanta - 227064416171</strong> | Office Supplies Management System | © 2026
 </div>
 """, unsafe_allow_html=True)
