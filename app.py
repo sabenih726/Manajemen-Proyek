@@ -38,6 +38,7 @@ STATUS_COLORS = {"Selesai": "#28a745", "Proses": "#ffc107", "Belum": "#dc3545"}
 # HELPER FUNCTIONS
 # =============================================
 def normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """Normalize column names to lowercase and rename common variations."""
     df = df.copy()
     df.columns = [c.strip().lower() for c in df.columns]
     rename_map = {
@@ -58,14 +59,17 @@ def normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
 
 @st.cache_data(ttl=60)
 def load_log(url: str) -> pd.DataFrame:
+    """Load log data from Google Sheets CSV."""
     df = pd.read_csv(url)
     df = normalize_columns(df)
     
+    # Check required columns
     required = {"timestamp", "week_no", "document", "status", "progress"}
     missing = required - set(df.columns)
     if missing:
         raise ValueError(f"Kolom wajib tidak ditemukan: {missing}. Tersedia: {list(df.columns)}")
     
+    # Parse data types
     df["timestamp"] = pd.to_datetime(df["timestamp"], errors="coerce")
     if "week_start" in df.columns:
         df["week_start"] = pd.to_datetime(df["week_start"], errors="coerce")
@@ -73,14 +77,18 @@ def load_log(url: str) -> pd.DataFrame:
     df["week_no"] = pd.to_numeric(df["week_no"], errors="coerce")
     df["progress"] = pd.to_numeric(df["progress"], errors="coerce")
     
+    # Clean status
     df["status"] = df["status"].astype(str).str.strip().str.title()
     df.loc[~df["status"].isin(STATUS_ORDER), "status"] = "Proses"
+    
+    # Clean document
     df["document"] = df["document"].astype(str).str.strip()
     
     return df.dropna(subset=["week_no", "document"])
 
 
 def compute_current_week(project_start: date) -> int:
+    """Calculate current project week based on start date."""
     today = date.today()
     delta_days = (today - project_start).days
     if delta_days < 0:
@@ -89,25 +97,82 @@ def compute_current_week(project_start: date) -> int:
 
 
 def get_latest_status(df_log: pd.DataFrame, df_baseline: pd.DataFrame) -> pd.DataFrame:
-    """Ambil status terbaru per dokumen dari log, gabungkan dengan baseline."""
-    df_latest = (
-        df_log.sort_values("timestamp", ascending=True)
-              .groupby("document", as_index=False)
-              .tail(1)
-    )
+    """Get latest status per document from log, merged with baseline."""
     
-    df_merged = df_baseline.merge(df_latest, on="document", how="left", suffixes=("_base", "_log"))
+    # Get latest entry per document from log
+    if len(df_log) > 0:
+        df_latest = (
+            df_log.sort_values("timestamp", ascending=True)
+                  .groupby("document", as_index=False)
+                  .tail(1)
+        )
+    else:
+        df_latest = pd.DataFrame(columns=["document", "status", "progress", "timestamp", "notes"])
     
-    # Fallback jika belum ada log
-    if "phase_base" in df_merged.columns:
-        df_merged["phase"] = df_merged["phase"].fillna(df_merged["phase_base"])
-    if "pic_role_base" in df_merged.columns:
-        df_merged["pic_role"] = df_merged["pic_role"].fillna(df_merged["pic_role_base"])
+    # Start with baseline as the foundation
+    df_result = df_baseline.copy()
     
-    df_merged["status"] = df_merged["status"].fillna("Belum")
-    df_merged["progress"] = df_merged["progress"].fillna(0)
+    # Merge with latest log data
+    if len(df_latest) > 0:
+        # Select only needed columns from log to avoid conflicts
+        log_cols = ["document"]
+        if "status" in df_latest.columns:
+            log_cols.append("status")
+        if "progress" in df_latest.columns:
+            log_cols.append("progress")
+        if "timestamp" in df_latest.columns:
+            log_cols.append("timestamp")
+        if "notes" in df_latest.columns:
+            log_cols.append("notes")
+        if "updated_by" in df_latest.columns:
+            log_cols.append("updated_by")
+        if "week_no" in df_latest.columns:
+            log_cols.append("week_no")
+        
+        df_log_subset = df_latest[log_cols].copy()
+        
+        # Rename columns to avoid conflicts
+        rename_dict = {}
+        for col in log_cols:
+            if col != "document":
+                rename_dict[col] = f"{col}_log"
+        df_log_subset = df_log_subset.rename(columns=rename_dict)
+        
+        # Merge
+        df_result = df_result.merge(df_log_subset, on="document", how="left")
+        
+        # Use log values if available, otherwise use baseline/default
+        if "status_log" in df_result.columns:
+            df_result["status"] = df_result["status_log"].fillna("Belum")
+        else:
+            df_result["status"] = "Belum"
+            
+        if "progress_log" in df_result.columns:
+            df_result["progress"] = df_result["progress_log"].fillna(0)
+        else:
+            df_result["progress"] = 0
+            
+        if "timestamp_log" in df_result.columns:
+            df_result["timestamp"] = df_result["timestamp_log"]
+        
+        if "notes_log" in df_result.columns:
+            df_result["notes"] = df_result["notes_log"]
+            
+        if "updated_by_log" in df_result.columns:
+            df_result["updated_by"] = df_result["updated_by_log"]
+            
+        if "week_no_log" in df_result.columns:
+            df_result["last_update_week"] = df_result["week_no_log"]
+        
+        # Drop temporary columns
+        cols_to_drop = [c for c in df_result.columns if c.endswith("_log")]
+        df_result = df_result.drop(columns=cols_to_drop, errors="ignore")
+    else:
+        # No log data, use defaults
+        df_result["status"] = "Belum"
+        df_result["progress"] = 0
     
-    return df_merged
+    return df_result
 
 
 # =============================================
@@ -351,7 +416,7 @@ with tab_sdm:
             return 'background-color: #95e1d3; color: black'
         return ''
     
-    st.dataframe(df_raci.style.applymap(style_raci, subset=['PM', 'BA/SA', 'UI/UX', 'Backend/DB']),
+    st.dataframe(df_raci.style.map(style_raci, subset=['PM', 'BA/SA', 'UI/UX', 'Backend/DB']),
                  use_container_width=True, hide_index=True)
     
     st.markdown("""
@@ -413,27 +478,7 @@ with tab_risiko:
     
     # Risk Register Table
     st.subheader("📋 Risk Register")
-    
-    def style_risk(row):
-        styles = [''] * len(row)
-        # Status Risiko column (index 7)
-        if row['Status Risiko'] == 'Open':
-            styles[7] = 'background-color: #ffcccc'
-        else:
-            styles[7] = 'background-color: #ccffcc'
-        
-        # Probabilitas column (index 2)
-        if row['Probabilitas'] == 'Tinggi':
-            styles[2] = 'background-color: #ff6b6b; color: white'
-        elif row['Probabilitas'] == 'Sedang':
-            styles[2] = 'background-color: #ffc107'
-        else:
-            styles[2] = 'background-color: #28a745; color: white'
-        
-        return styles
-    
-    st.dataframe(df_risiko.style.apply(style_risk, axis=1), 
-                 use_container_width=True, hide_index=True)
+    st.dataframe(df_risiko, use_container_width=True, hide_index=True)
     
     st.markdown("---")
     
@@ -594,28 +639,22 @@ with tab_dokumen:
         (df_dokumen['pic_role'].isin(role_filter))
     ].copy()
     
-    # Table
-    def highlight_status(val):
-        if val == 'Selesai':
-            return 'background-color: #d4edda; color: #155724'
-        elif val == 'Proses':
-            return 'background-color: #fff3cd; color: #856404'
-        else:
-            return 'background-color: #f8d7da; color: #721c24'
-    
-    # Prepare display columns
-    display_cols = ['document', 'phase', 'pic_role', 'target_week', 'target_date', 'status', 'progress']
-    if 'timestamp' in df_filtered.columns:
-        display_cols.append('timestamp')
-    if 'notes' in df_filtered.columns:
-        display_cols.append('notes')
+    # Table - select available columns
+    available_cols = df_filtered.columns.tolist()
+    display_cols = []
+    for col in ['document', 'phase', 'pic_role', 'target_week', 'target_date', 'status', 'progress', 'timestamp', 'notes']:
+        if col in available_cols:
+            display_cols.append(col)
     
     df_display = df_filtered[display_cols].copy()
-    df_display['target_date'] = pd.to_datetime(df_display['target_date']).dt.strftime('%d/%m/%Y')
-    df_display['progress'] = df_display['progress'].astype(int).astype(str) + '%'
     
-    st.dataframe(df_display.style.applymap(highlight_status, subset=['status']),
-                 use_container_width=True, hide_index=True)
+    # Format columns
+    if 'target_date' in df_display.columns:
+        df_display['target_date'] = pd.to_datetime(df_display['target_date']).dt.strftime('%d/%m/%Y')
+    if 'progress' in df_display.columns:
+        df_display['progress'] = df_display['progress'].astype(int).astype(str) + '%'
+    
+    st.dataframe(df_display, use_container_width=True, hide_index=True)
     
     st.markdown("---")
     
@@ -664,8 +703,13 @@ with tab_log:
         
         st.markdown("---")
         
-        # Tabel log
-        show_cols = [c for c in ["timestamp", "email", "week_no", "week_start", "document", "phase", "status", "progress", "pic_role", "updated_by", "notes"] if c in df_view.columns]
+        # Tabel log - show available columns
+        available_log_cols = df_view.columns.tolist()
+        show_cols = []
+        for c in ["timestamp", "email", "week_no", "week_start", "document", "phase", "status", "progress", "pic_role", "updated_by", "notes"]:
+            if c in available_log_cols:
+                show_cols.append(c)
+        
         st.dataframe(df_view.sort_values("timestamp", ascending=False)[show_cols], use_container_width=True, hide_index=True)
         
         st.markdown("---")
