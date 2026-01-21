@@ -19,31 +19,26 @@ st.set_page_config(
 # =============================================
 st.markdown("""
 <style>
-    /* Import Google Fonts */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
     
-    /* Global Styles - BASE FONT LARGER */
     * {
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
     
     html, body, [class*="css"] {
-        font-size: 16px;  /* Base font size increased */
+        font-size: 16px;
     }
     
-    /* Remove default Streamlit padding */
     .block-container {
         padding-top: 2rem;
         padding-bottom: 2rem;
         max-width: 1400px;
     }
     
-    /* Main Background - Pure White */
     .main {
         background-color: #FFFFFF;
     }
     
-    /* Sidebar - Simple Gray */
     [data-testid="stSidebar"] {
         background-color: #F8FAFC;
         border-right: 1px solid #E2E8F0;
@@ -53,7 +48,6 @@ st.markdown("""
         font-size: 1rem;
     }
     
-    /* Header */
     .dashboard-header {
         background: #FFFFFF;
         padding: 1.5rem 0;
@@ -63,7 +57,7 @@ st.markdown("""
     
     .dashboard-header h1 {
         margin: 0;
-        font-size: 2.25rem;  /* LARGER */
+        font-size: 2.25rem;
         font-weight: 700;
         color: #0F172A;
         letter-spacing: -0.025em;
@@ -71,12 +65,11 @@ st.markdown("""
     
     .dashboard-header p {
         margin: 0.5rem 0 0 0;
-        font-size: 1.125rem;  /* LARGER */
+        font-size: 1.125rem;
         color: #64748B;
         font-weight: 400;
     }
     
-    /* KPI Card - Clean Design */
     .kpi-card {
         background: #FFFFFF;
         padding: 1.5rem;
@@ -92,7 +85,7 @@ st.markdown("""
     }
     
     .kpi-label {
-        font-size: 0.9rem;  /* LARGER from 0.75rem */
+        font-size: 0.9rem;
         color: #64748B;
         font-weight: 600;
         text-transform: uppercase;
@@ -101,7 +94,7 @@ st.markdown("""
     }
     
     .kpi-value {
-        font-size: 2.5rem;  /* LARGER from 2rem */
+        font-size: 2.5rem;
         font-weight: 700;
         color: #0F172A;
         line-height: 1.1;
@@ -109,7 +102,7 @@ st.markdown("""
     }
     
     .kpi-change {
-        font-size: 0.95rem;  /* LARGER from 0.75rem */
+        font-size: 0.95rem;
         font-weight: 500;
         color: #64748B;
     }
@@ -117,9 +110,8 @@ st.markdown("""
     .kpi-change.positive { color: #059669; }
     .kpi-change.negative { color: #DC2626; }
     
-    /* Section Title */
     .section-title {
-        font-size: 1.25rem;  /* LARGER from 1rem */
+        font-size: 1.25rem;
         font-weight: 600;
         color: #0F172A;
         margin: 2.5rem 0 1.25rem 0;
@@ -127,7 +119,6 @@ st.markdown("""
         border-bottom: 1px solid #F1F5F9;
     }
     
-    /* Chart Container */
     .chart-container {
         background: #FFFFFF;
         padding: 1.5rem;
@@ -137,18 +128,17 @@ st.markdown("""
     }
     
     .chart-header {
-        font-size: 1.1rem;  /* LARGER from 0.875rem */
+        font-size: 1.1rem;
         font-weight: 600;
         color: #0F172A;
         margin-bottom: 1rem;
     }
     
-    /* Alert Styles - Minimal */
     .alert {
         padding: 1rem 1.25rem;
         border-radius: 6px;
         margin: 0.75rem 0;
-        font-size: 1rem;  /* LARGER from 0.875rem */
+        font-size: 1rem;
         border-left: 4px solid;
         line-height: 1.5;
     }
@@ -177,7 +167,6 @@ st.markdown("""
         color: #1E40AF;
     }
     
-    /* Progress Bar - Minimal */
     .progress-container {
         margin: 1.25rem 0;
     }
@@ -186,13 +175,13 @@ st.markdown("""
         display: flex;
         justify-content: space-between;
         margin-bottom: 0.75rem;
-        font-size: 1.05rem;  /* LARGER */
+        font-size: 1.05rem;
         color: #475569;
         font-weight: 500;
     }
     
     .progress-bar-bg {
-        height: 12px;  /* LARGER from 8px */
+        height: 12px;
         background: #F1F5F9;
         border-radius: 6px;
         overflow: hidden;
@@ -205,16 +194,14 @@ st.markdown("""
         transition: width 0.3s ease;
     }
     
-    /* Table Styling */
     .stDataFrame {
-        font-size: 1rem !important;  /* LARGER */
+        font-size: 1rem !important;
     }
     
     .stDataFrame [data-testid="stDataFrameResizable"] {
         font-size: 1rem !important;
     }
     
-    /* Tabs - Clean */
     .stTabs [data-baseweb="tab-list"] {
         gap: 0;
         background: transparent;
@@ -226,8 +213,8 @@ st.markdown("""
         border: none;
         color: #64748B;
         font-weight: 500;
-        padding: 1rem 1.75rem;  /* LARGER padding */
-        font-size: 1.05rem;  /* LARGER from 0.875rem */
+        padding: 1rem 1.75rem;
+        font-size: 1.05rem;
     }
     
     .stTabs [data-baseweb="tab"]:hover {
@@ -241,7 +228,6 @@ st.markdown("""
         border-bottom: 2px solid #0F172A;
     }
     
-    /* Filter Panel */
     .filter-section {
         background: #F8FAFC;
         padding: 1.25rem;
@@ -250,32 +236,29 @@ st.markdown("""
         border: 1px solid #E2E8F0;
     }
     
-    /* Streamlit Metrics - LARGER */
     [data-testid="stMetricValue"] {
-        font-size: 2.25rem !important;  /* LARGER */
+        font-size: 2.25rem !important;
         font-weight: 700;
         color: #0F172A;
     }
     
     [data-testid="stMetricLabel"] {
-        font-size: 0.95rem !important;  /* LARGER */
+        font-size: 0.95rem !important;
         color: #64748B;
         font-weight: 600;
         text-transform: uppercase;
     }
     
     [data-testid="stMetricDelta"] {
-        font-size: 0.95rem !important;  /* LARGER */
+        font-size: 0.95rem !important;
     }
     
-    /* Input Labels */
     .stSelectbox label, .stMultiSelect label, .stNumberInput label, .stSlider label {
-        font-size: 1rem !important;  /* LARGER */
+        font-size: 1rem !important;
         font-weight: 500;
         color: #374151;
     }
     
-    /* Selectbox text */
     .stSelectbox [data-baseweb="select"] {
         font-size: 1rem;
     }
@@ -284,23 +267,19 @@ st.markdown("""
         font-size: 0.95rem;
     }
     
-    /* Caption */
     .stCaption {
-        font-size: 0.95rem !important;  /* LARGER */
+        font-size: 0.95rem !important;
     }
     
-    /* Markdown text */
     .stMarkdown p {
         font-size: 1rem;
         line-height: 1.6;
     }
     
-    /* Info/Warning/Error boxes */
     .stAlert {
         font-size: 1rem;
     }
     
-    /* Hide Streamlit Elements */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     .stDeployButton {display:none;}
@@ -308,17 +287,14 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # =============================================
-# COLOR PALETTE - MINIMAL & CONSISTENT
+# COLOR PALETTE
 # =============================================
 COLORS = {
     'primary': '#0F172A',
     'success': '#10B981',
     'warning': '#F59E0B',
     'danger': '#EF4444',
-    'info': '#3B82F6',
     'neutral': '#64748B',
-    'background': '#F8FAFC',
-    'border': '#E2E8F0'
 }
 
 STATUS_COLORS = {
@@ -506,22 +482,34 @@ def progress_bar(label, current, total):
     """
 
 # =============================================
-# PLOTLY CHART CONFIG - LARGER FONTS
+# CHART HELPER FUNCTION
 # =============================================
-CHART_LAYOUT = dict(
-    font=dict(family="Inter, sans-serif", size=14),  # LARGER base font
-    title_font=dict(size=16),
-    plot_bgcolor='white',
-    paper_bgcolor='white',
-    margin=dict(l=20, r=20, t=40, b=40),
-)
+def get_chart_layout(height=320):
+    return dict(
+        height=height,
+        font=dict(family="Inter, sans-serif", size=14),
+        plot_bgcolor='white',
+        paper_bgcolor='white',
+        margin=dict(l=20, r=20, t=40, b=40),
+    )
 
-CHART_AXIS = dict(
-    tickfont=dict(size=13),  # LARGER tick labels
-    titlefont=dict(size=14),  # LARGER axis titles
-    showgrid=True,
-    gridcolor='#F1F5F9'
-)
+def get_xaxis(title="", show_grid=False):
+    return dict(
+        title=title,
+        showgrid=show_grid,
+        gridcolor='#F1F5F9',
+        tickfont=dict(size=13),
+        titlefont=dict(size=14)
+    )
+
+def get_yaxis(title="", show_grid=True):
+    return dict(
+        title=title,
+        showgrid=show_grid,
+        gridcolor='#F1F5F9',
+        tickfont=dict(size=13),
+        titlefont=dict(size=14)
+    )
 
 # =============================================
 # LOAD DATA
@@ -529,7 +517,7 @@ CHART_AXIS = dict(
 # Header
 st.markdown("""
 <div class="dashboard-header">
-    <h1>Project Monitoring Dashboard</h1>
+    <h1>📊 Project Monitoring Dashboard</h1>
     <p>Office Supplies Management System — Real-time project tracking</p>
 </div>
 """, unsafe_allow_html=True)
@@ -626,16 +614,15 @@ with tabs[0]:
             y=status_count.values,
             text=status_count.values,
             textposition='outside',
-            textfont=dict(size=15),  # LARGER
+            textfont=dict(size=15),
             marker_color=[STATUS_COLORS[s] for s in status_count.index],
             showlegend=False
         )])
         
         fig.update_layout(
-            height=320,
-            **CHART_LAYOUT,
-            xaxis=dict(title="", showgrid=False, **CHART_AXIS),
-            yaxis=dict(title="Count", **CHART_AXIS)
+            **get_chart_layout(320),
+            xaxis=get_xaxis(),
+            yaxis=get_yaxis("Count")
         )
         
         st.plotly_chart(fig, use_container_width=True)
@@ -652,16 +639,15 @@ with tabs[0]:
             y=role_count.values,
             text=role_count.values,
             textposition='outside',
-            textfont=dict(size=15),  # LARGER
+            textfont=dict(size=15),
             marker_color=COLORS['primary'],
             showlegend=False
         )])
         
         fig2.update_layout(
-            height=320,
-            **CHART_LAYOUT,
-            xaxis=dict(title="", showgrid=False, **CHART_AXIS),
-            yaxis=dict(title="Tasks", **CHART_AXIS)
+            **get_chart_layout(320),
+            xaxis=get_xaxis(),
+            yaxis=get_yaxis("Tasks")
         )
         
         st.plotly_chart(fig2, use_container_width=True)
@@ -679,16 +665,15 @@ with tabs[0]:
         orientation='h',
         text=df_sorted['progress'].apply(lambda x: f'{x:.0f}%'),
         textposition='outside',
-        textfont=dict(size=13),  # LARGER
+        textfont=dict(size=13),
         marker_color=[STATUS_COLORS[s] for s in df_sorted['status']],
         showlegend=False
     )])
     
     fig3.update_layout(
-        height=max(450, len(df_sorted) * 45),  # More height per bar
-        **CHART_LAYOUT,
-        xaxis=dict(range=[0, 115], title="Progress (%)", **CHART_AXIS),
-        yaxis=dict(title="", tickfont=dict(size=13))  # LARGER y-axis labels
+        **get_chart_layout(max(450, len(df_sorted) * 45)),
+        xaxis=dict(range=[0, 115], title="Progress (%)", showgrid=True, gridcolor='#F1F5F9', tickfont=dict(size=13)),
+        yaxis=dict(title="", tickfont=dict(size=13))
     )
     
     st.plotly_chart(fig3, use_container_width=True)
@@ -754,11 +739,10 @@ with tabs[1]:
     
     fig.update_layout(
         barmode='stack',
-        height=380,
-        **CHART_LAYOUT,
+        **get_chart_layout(380),
         legend=dict(orientation='h', yanchor='bottom', y=1.02, font=dict(size=13)),
-        xaxis=dict(showgrid=False, **CHART_AXIS),
-        yaxis=dict(**CHART_AXIS)
+        xaxis=get_xaxis(),
+        yaxis=get_yaxis()
     )
     
     st.plotly_chart(fig, use_container_width=True)
@@ -804,9 +788,11 @@ with tabs[2]:
             showlegend=False
         )])
         
-        fig.update_layout(height=320, **CHART_LAYOUT,
-                         xaxis=dict(showgrid=False, **CHART_AXIS),
-                         yaxis=dict(**CHART_AXIS))
+        fig.update_layout(
+            **get_chart_layout(320),
+            xaxis=get_xaxis(),
+            yaxis=get_yaxis()
+        )
         
         st.plotly_chart(fig, use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
@@ -825,9 +811,11 @@ with tabs[2]:
             showlegend=False
         )])
         
-        fig2.update_layout(height=320, **CHART_LAYOUT,
-                          xaxis=dict(showgrid=False, **CHART_AXIS),
-                          yaxis=dict(**CHART_AXIS))
+        fig2.update_layout(
+            **get_chart_layout(320),
+            xaxis=get_xaxis(),
+            yaxis=get_yaxis()
+        )
         
         st.plotly_chart(fig2, use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
@@ -900,11 +888,10 @@ with tabs[3]:
                              marker=dict(size=8)))
     
     fig.update_layout(
-        height=420,
-        **CHART_LAYOUT,
+        **get_chart_layout(420),
         legend=dict(orientation='h', yanchor='bottom', y=1.02, font=dict(size=13)),
-        xaxis=dict(title='Week', **CHART_AXIS),
-        yaxis=dict(title='Value (Rp)', **CHART_AXIS)
+        xaxis=get_xaxis('Week', True),
+        yaxis=get_yaxis('Value (Rp)')
     )
     
     st.plotly_chart(fig, use_container_width=True)
@@ -977,6 +964,6 @@ with tabs[5]:
 st.markdown("---")
 st.markdown("""
 <div style="text-align: center; color: #64748B; font-size: 0.95rem; padding: 1rem 0;">
-    <strong>Manajemen Proyek - Rizki FErmanta - 227064416171</strong> | Office Supplies Management System | © 2026
+    <strong>Manajemen Proyek - Rizki Fermanta - 227064416171</strong> | Office Supplies Management System | © 2026
 </div>
 """, unsafe_allow_html=True)
