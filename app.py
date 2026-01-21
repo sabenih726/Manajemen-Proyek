@@ -15,22 +15,27 @@ st.set_page_config(
 )
 
 # =============================================
-# CUSTOM CSS - CLEAN MINIMAL STYLE
+# CUSTOM CSS - CLEAN MINIMAL STYLE (LARGER TEXT)
 # =============================================
 st.markdown("""
 <style>
     /* Import Google Fonts */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
     
-    /* Global Styles */
+    /* Global Styles - BASE FONT LARGER */
     * {
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    
+    html, body, [class*="css"] {
+        font-size: 16px;  /* Base font size increased */
     }
     
     /* Remove default Streamlit padding */
     .block-container {
         padding-top: 2rem;
         padding-bottom: 2rem;
+        max-width: 1400px;
     }
     
     /* Main Background - Pure White */
@@ -44,6 +49,10 @@ st.markdown("""
         border-right: 1px solid #E2E8F0;
     }
     
+    [data-testid="stSidebar"] .stMarkdown p {
+        font-size: 1rem;
+    }
+    
     /* Header */
     .dashboard-header {
         background: #FFFFFF;
@@ -54,15 +63,15 @@ st.markdown("""
     
     .dashboard-header h1 {
         margin: 0;
-        font-size: 1.75rem;
+        font-size: 2.25rem;  /* LARGER */
         font-weight: 700;
         color: #0F172A;
         letter-spacing: -0.025em;
     }
     
     .dashboard-header p {
-        margin: 0.25rem 0 0 0;
-        font-size: 0.875rem;
+        margin: 0.5rem 0 0 0;
+        font-size: 1.125rem;  /* LARGER */
         color: #64748B;
         font-weight: 400;
     }
@@ -70,7 +79,7 @@ st.markdown("""
     /* KPI Card - Clean Design */
     .kpi-card {
         background: #FFFFFF;
-        padding: 1.25rem;
+        padding: 1.5rem;
         border-radius: 8px;
         border: 1px solid #E2E8F0;
         transition: all 0.2s ease;
@@ -79,11 +88,11 @@ st.markdown("""
     
     .kpi-card:hover {
         border-color: #CBD5E1;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     }
     
     .kpi-label {
-        font-size: 0.75rem;
+        font-size: 0.9rem;  /* LARGER from 0.75rem */
         color: #64748B;
         font-weight: 600;
         text-transform: uppercase;
@@ -92,15 +101,15 @@ st.markdown("""
     }
     
     .kpi-value {
-        font-size: 2rem;
+        font-size: 2.5rem;  /* LARGER from 2rem */
         font-weight: 700;
         color: #0F172A;
-        line-height: 1;
+        line-height: 1.1;
         margin-bottom: 0.5rem;
     }
     
     .kpi-change {
-        font-size: 0.75rem;
+        font-size: 0.95rem;  /* LARGER from 0.75rem */
         font-weight: 500;
         color: #64748B;
     }
@@ -110,11 +119,11 @@ st.markdown("""
     
     /* Section Title */
     .section-title {
-        font-size: 1rem;
+        font-size: 1.25rem;  /* LARGER from 1rem */
         font-weight: 600;
         color: #0F172A;
-        margin: 2rem 0 1rem 0;
-        padding-bottom: 0.5rem;
+        margin: 2.5rem 0 1.25rem 0;
+        padding-bottom: 0.75rem;
         border-bottom: 1px solid #F1F5F9;
     }
     
@@ -128,7 +137,7 @@ st.markdown("""
     }
     
     .chart-header {
-        font-size: 0.875rem;
+        font-size: 1.1rem;  /* LARGER from 0.875rem */
         font-weight: 600;
         color: #0F172A;
         margin-bottom: 1rem;
@@ -136,11 +145,12 @@ st.markdown("""
     
     /* Alert Styles - Minimal */
     .alert {
-        padding: 0.75rem 1rem;
+        padding: 1rem 1.25rem;
         border-radius: 6px;
-        margin: 0.5rem 0;
-        font-size: 0.875rem;
-        border-left: 3px solid;
+        margin: 0.75rem 0;
+        font-size: 1rem;  /* LARGER from 0.875rem */
+        border-left: 4px solid;
+        line-height: 1.5;
     }
     
     .alert-success {
@@ -169,44 +179,39 @@ st.markdown("""
     
     /* Progress Bar - Minimal */
     .progress-container {
-        margin: 1rem 0;
+        margin: 1.25rem 0;
     }
     
     .progress-header {
         display: flex;
         justify-content: space-between;
-        margin-bottom: 0.5rem;
-        font-size: 0.875rem;
+        margin-bottom: 0.75rem;
+        font-size: 1.05rem;  /* LARGER */
         color: #475569;
         font-weight: 500;
     }
     
     .progress-bar-bg {
-        height: 8px;
+        height: 12px;  /* LARGER from 8px */
         background: #F1F5F9;
-        border-radius: 4px;
+        border-radius: 6px;
         overflow: hidden;
     }
     
     .progress-bar-fill {
         height: 100%;
         background: #0F172A;
-        border-radius: 4px;
+        border-radius: 6px;
         transition: width 0.3s ease;
     }
     
     /* Table Styling */
-    .dataframe {
-        font-size: 0.875rem;
+    .stDataFrame {
+        font-size: 1rem !important;  /* LARGER */
     }
     
-    .dataframe th {
-        background-color: #F8FAFC !important;
-        color: #475569 !important;
-        font-weight: 600 !important;
-        text-transform: uppercase;
-        font-size: 0.75rem;
-        letter-spacing: 0.05em;
+    .stDataFrame [data-testid="stDataFrameResizable"] {
+        font-size: 1rem !important;
     }
     
     /* Tabs - Clean */
@@ -221,8 +226,8 @@ st.markdown("""
         border: none;
         color: #64748B;
         font-weight: 500;
-        padding: 0.75rem 1.5rem;
-        font-size: 0.875rem;
+        padding: 1rem 1.75rem;  /* LARGER padding */
+        font-size: 1.05rem;  /* LARGER from 0.875rem */
     }
     
     .stTabs [data-baseweb="tab"]:hover {
@@ -239,45 +244,66 @@ st.markdown("""
     /* Filter Panel */
     .filter-section {
         background: #F8FAFC;
-        padding: 1rem;
+        padding: 1.25rem;
         border-radius: 6px;
         margin-bottom: 1.5rem;
         border: 1px solid #E2E8F0;
     }
     
-    /* Badge */
-    .badge {
-        display: inline-block;
-        padding: 0.25rem 0.75rem;
-        border-radius: 12px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        margin: 0.25rem;
-    }
-    
-    .badge-success { background: #D1FAE5; color: #065F46; }
-    .badge-warning { background: #FEF3C7; color: #92400E; }
-    .badge-error { background: #FEE2E2; color: #991B1B; }
-    .badge-neutral { background: #F1F5F9; color: #475569; }
-    
-    /* Hide Streamlit Elements */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    .stDeployButton {display:none;}
-    
-    /* Metrics */
+    /* Streamlit Metrics - LARGER */
     [data-testid="stMetricValue"] {
-        font-size: 2rem;
+        font-size: 2.25rem !important;  /* LARGER */
         font-weight: 700;
         color: #0F172A;
     }
     
     [data-testid="stMetricLabel"] {
-        font-size: 0.75rem;
+        font-size: 0.95rem !important;  /* LARGER */
         color: #64748B;
         font-weight: 600;
         text-transform: uppercase;
     }
+    
+    [data-testid="stMetricDelta"] {
+        font-size: 0.95rem !important;  /* LARGER */
+    }
+    
+    /* Input Labels */
+    .stSelectbox label, .stMultiSelect label, .stNumberInput label, .stSlider label {
+        font-size: 1rem !important;  /* LARGER */
+        font-weight: 500;
+        color: #374151;
+    }
+    
+    /* Selectbox text */
+    .stSelectbox [data-baseweb="select"] {
+        font-size: 1rem;
+    }
+    
+    .stMultiSelect [data-baseweb="tag"] {
+        font-size: 0.95rem;
+    }
+    
+    /* Caption */
+    .stCaption {
+        font-size: 0.95rem !important;  /* LARGER */
+    }
+    
+    /* Markdown text */
+    .stMarkdown p {
+        font-size: 1rem;
+        line-height: 1.6;
+    }
+    
+    /* Info/Warning/Error boxes */
+    .stAlert {
+        font-size: 1rem;
+    }
+    
+    /* Hide Streamlit Elements */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    .stDeployButton {display:none;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -285,17 +311,16 @@ st.markdown("""
 # COLOR PALETTE - MINIMAL & CONSISTENT
 # =============================================
 COLORS = {
-    'primary': '#0F172A',      # Slate 900 - untuk data utama
-    'success': '#10B981',      # Emerald 500
-    'warning': '#F59E0B',      # Amber 500
-    'danger': '#EF4444',       # Red 500
-    'info': '#3B82F6',         # Blue 500
-    'neutral': '#64748B',      # Slate 500
-    'background': '#F8FAFC',   # Slate 50
-    'border': '#E2E8F0'        # Slate 200
+    'primary': '#0F172A',
+    'success': '#10B981',
+    'warning': '#F59E0B',
+    'danger': '#EF4444',
+    'info': '#3B82F6',
+    'neutral': '#64748B',
+    'background': '#F8FAFC',
+    'border': '#E2E8F0'
 }
 
-# Status Colors - Simplified
 STATUS_COLORS = {
     "Selesai": COLORS['success'],
     "Proses": COLORS['warning'],
@@ -450,7 +475,9 @@ def load_evm():
 def kpi_card(label, value, change=None):
     change_html = ""
     if change:
-        change_class = "positive" if "+" in str(change) or "✓" in str(change) else "negative" if "-" in str(change) else ""
+        change_class = "positive" if "✓" in str(change) or "completed" in str(change).lower() else ""
+        if "⚠" in str(change) or "behind" in str(change).lower() or "overdue" in str(change).lower():
+            change_class = "negative"
         change_html = f'<div class="kpi-change {change_class}">{change}</div>'
     
     return f"""
@@ -470,7 +497,7 @@ def progress_bar(label, current, total):
     <div class="progress-container">
         <div class="progress-header">
             <span>{label}</span>
-            <span>{current}/{total} ({percentage:.0f}%)</span>
+            <span>{percentage:.1f}%</span>
         </div>
         <div class="progress-bar-bg">
             <div class="progress-bar-fill" style="width: {percentage}%"></div>
@@ -479,31 +506,56 @@ def progress_bar(label, current, total):
     """
 
 # =============================================
+# PLOTLY CHART CONFIG - LARGER FONTS
+# =============================================
+CHART_LAYOUT = dict(
+    font=dict(family="Inter, sans-serif", size=14),  # LARGER base font
+    title_font=dict(size=16),
+    plot_bgcolor='white',
+    paper_bgcolor='white',
+    margin=dict(l=20, r=20, t=40, b=40),
+)
+
+CHART_AXIS = dict(
+    tickfont=dict(size=13),  # LARGER tick labels
+    titlefont=dict(size=14),  # LARGER axis titles
+    showgrid=True,
+    gridcolor='#F1F5F9'
+)
+
+# =============================================
 # LOAD DATA
 # =============================================
 # Header
 st.markdown("""
 <div class="dashboard-header">
-    <h1>Project Monitoring Dashboard</h1>
-    <p>Office Supplies Management System</p>
+    <h1>📊 Project Monitoring Dashboard</h1>
+    <p>Office Supplies Management System — Real-time project tracking</p>
 </div>
 """, unsafe_allow_html=True)
 
 # Sidebar
 with st.sidebar:
-    st.markdown("### Settings")
+    st.markdown("### ⚙️ Settings")
+    st.markdown("---")
     auto_week = compute_current_week(PROJECT_START)
-    st.info(f"**Current Week:** {auto_week}")
-    st.caption(f"Start: {PROJECT_START.strftime('%d %b %Y')}")
+    st.info(f"**📅 Current Week:** {auto_week}")
+    st.caption(f"Project Start: {PROJECT_START.strftime('%d %b %Y')}")
+    st.markdown("---")
+    st.markdown("### 📊 Quick Info")
 
 # Load data
 try:
     df_log = load_log(LOG_URL)
     data_loaded = True
+    with st.sidebar:
+        st.success(f"✅ {len(df_log)} records loaded")
 except Exception as e:
     st.warning(f"⚠️ Data load error: {str(e)}")
     df_log = pd.DataFrame(columns=["timestamp", "week_no", "document", "status", "progress"])
     data_loaded = False
+    with st.sidebar:
+        st.error("❌ Load failed")
 
 df_baseline = pd.DataFrame(BASELINE)
 df_baseline["target_date"] = df_baseline["target_week"].apply(
@@ -523,8 +575,10 @@ tabs = st.tabs(["📊 Overview", "👥 Team", "⚠️ Risk", "💰 EVM", "📄 D
 # TAB 1: OVERVIEW
 # =============================================
 with tabs[0]:
-    # Week selector
-    current_week = st.number_input("Week", min_value=1, max_value=12, value=auto_week, key="week_overview")
+    col_w, col_space = st.columns([1, 3])
+    with col_w:
+        current_week = st.number_input("📅 Current Week", min_value=1, max_value=12, 
+                                       value=auto_week, key="week_overview")
     
     st.markdown("---")
     
@@ -543,21 +597,21 @@ with tabs[0]:
     with col1:
         st.markdown(kpi_card("Total Documents", total, "All deliverables"), unsafe_allow_html=True)
     with col2:
-        st.markdown(kpi_card("Completed", selesai, f"{selesai/total*100:.0f}%"), unsafe_allow_html=True)
+        st.markdown(kpi_card("Completed", selesai, f"✓ {selesai/total*100:.0f}% done"), unsafe_allow_html=True)
     with col3:
-        st.markdown(kpi_card("In Progress", proses, f"{proses/total*100:.0f}%"), unsafe_allow_html=True)
+        st.markdown(kpi_card("In Progress", proses, f"{proses/total*100:.0f}% active"), unsafe_allow_html=True)
     with col4:
-        st.markdown(kpi_card("Not Started", belum, f"{belum/total*100:.0f}%"), unsafe_allow_html=True)
+        st.markdown(kpi_card("Not Started", belum, f"{belum/total*100:.0f}% pending"), unsafe_allow_html=True)
     with col5:
-        st.markdown(kpi_card("Overdue", overdue, "⚠️ Needs attention" if overdue > 0 else "✓ On track"), 
-                   unsafe_allow_html=True)
+        status_text = "⚠️ Needs attention" if overdue > 0 else "✓ All on track"
+        st.markdown(kpi_card("Overdue", overdue, status_text), unsafe_allow_html=True)
     
     # Overall Progress
-    st.markdown('<div class="section-title">Overall Progress</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">📈 Overall Progress</div>', unsafe_allow_html=True)
     st.markdown(progress_bar("Project Completion", avg_progress, 100), unsafe_allow_html=True)
     
     # Charts
-    st.markdown('<div class="section-title">Analytics</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">📊 Analytics</div>', unsafe_allow_html=True)
     
     col_c1, col_c2 = st.columns(2)
     
@@ -572,17 +626,16 @@ with tabs[0]:
             y=status_count.values,
             text=status_count.values,
             textposition='outside',
+            textfont=dict(size=15),  # LARGER
             marker_color=[STATUS_COLORS[s] for s in status_count.index],
             showlegend=False
         )])
         
         fig.update_layout(
-            height=300,
-            margin=dict(l=0, r=0, t=10, b=0),
-            xaxis=dict(title="", showgrid=False),
-            yaxis=dict(title="Count", showgrid=True, gridcolor='#F1F5F9'),
-            plot_bgcolor='white',
-            paper_bgcolor='white'
+            height=320,
+            **CHART_LAYOUT,
+            xaxis=dict(title="", showgrid=False, **CHART_AXIS),
+            yaxis=dict(title="Count", **CHART_AXIS)
         )
         
         st.plotly_chart(fig, use_container_width=True)
@@ -599,24 +652,23 @@ with tabs[0]:
             y=role_count.values,
             text=role_count.values,
             textposition='outside',
+            textfont=dict(size=15),  # LARGER
             marker_color=COLORS['primary'],
             showlegend=False
         )])
         
         fig2.update_layout(
-            height=300,
-            margin=dict(l=0, r=0, t=10, b=0),
-            xaxis=dict(title="", showgrid=False),
-            yaxis=dict(title="Tasks", showgrid=True, gridcolor='#F1F5F9'),
-            plot_bgcolor='white',
-            paper_bgcolor='white'
+            height=320,
+            **CHART_LAYOUT,
+            xaxis=dict(title="", showgrid=False, **CHART_AXIS),
+            yaxis=dict(title="Tasks", **CHART_AXIS)
         )
         
         st.plotly_chart(fig2, use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
     
     # Document Progress
-    st.markdown('<div class="section-title">Document Progress</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">📋 Document Progress</div>', unsafe_allow_html=True)
     st.markdown('<div class="chart-container">', unsafe_allow_html=True)
     
     df_sorted = df_dokumen.sort_values('progress', ascending=True)
@@ -627,33 +679,32 @@ with tabs[0]:
         orientation='h',
         text=df_sorted['progress'].apply(lambda x: f'{x:.0f}%'),
         textposition='outside',
+        textfont=dict(size=13),  # LARGER
         marker_color=[STATUS_COLORS[s] for s in df_sorted['status']],
         showlegend=False
     )])
     
     fig3.update_layout(
-        height=max(400, len(df_sorted) * 35),
-        margin=dict(l=0, r=0, t=10, b=0),
-        xaxis=dict(range=[0, 110], title="Progress (%)", showgrid=True, gridcolor='#F1F5F9'),
-        yaxis=dict(title=""),
-        plot_bgcolor='white',
-        paper_bgcolor='white'
+        height=max(450, len(df_sorted) * 45),  # More height per bar
+        **CHART_LAYOUT,
+        xaxis=dict(range=[0, 115], title="Progress (%)", **CHART_AXIS),
+        yaxis=dict(title="", tickfont=dict(size=13))  # LARGER y-axis labels
     )
     
     st.plotly_chart(fig3, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
     
     # Alerts
-    st.markdown('<div class="section-title">Alerts</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">⚠️ Alerts</div>', unsafe_allow_html=True)
     
     overdue_df = df_dokumen[df_dokumen["overdue"]]
     if overdue_df.empty:
-        st.markdown(alert_box("✓ All documents on track", "success"), unsafe_allow_html=True)
+        st.markdown(alert_box("✓ All documents are on track. No overdue items.", "success"), unsafe_allow_html=True)
     else:
         for _, row in overdue_df.iterrows():
             weeks_late = current_week - row["target_week"]
             st.markdown(alert_box(
-                f"<b>{row['document']}</b> — {weeks_late} week(s) overdue (Target: Week {row['target_week']}) — PIC: {row['pic_role']}",
+                f"<strong>{row['document']}</strong> — {weeks_late} week(s) overdue (Target: Week {row['target_week']}) — PIC: {row['pic_role']}",
                 "error"
             ), unsafe_allow_html=True)
 
@@ -661,7 +712,7 @@ with tabs[0]:
 # TAB 2: TEAM
 # =============================================
 with tabs[1]:
-    st.markdown('<div class="section-title">Team Overview</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">👥 Team Overview</div>', unsafe_allow_html=True)
     
     cols = st.columns(4)
     for idx, (_, row) in enumerate(df_tim.iterrows()):
@@ -669,13 +720,13 @@ with tabs[1]:
             tasks = df_dokumen[df_dokumen['pic_role'] == row['Role']]
             completed = len(tasks[tasks['status'] == 'Selesai'])
             total_tasks = len(tasks)
-            st.markdown(kpi_card(row['Role'], total_tasks, f"{completed} completed"), unsafe_allow_html=True)
+            st.markdown(kpi_card(row['Role'], total_tasks, f"✓ {completed} completed"), unsafe_allow_html=True)
     
-    st.markdown('<div class="section-title">Team Details</div>', unsafe_allow_html=True)
-    st.dataframe(df_tim, use_container_width=True, hide_index=True)
+    st.markdown('<div class="section-title">📋 Team Details</div>', unsafe_allow_html=True)
+    st.dataframe(df_tim, use_container_width=True, hide_index=True, height=200)
     
     # Workload Chart
-    st.markdown('<div class="section-title">Workload Distribution</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">📊 Workload Distribution</div>', unsafe_allow_html=True)
     st.markdown('<div class="chart-container">', unsafe_allow_html=True)
     
     workload_data = []
@@ -692,21 +743,22 @@ with tabs[1]:
     
     fig = go.Figure()
     fig.add_trace(go.Bar(name='Completed', x=df_workload['Role'], y=df_workload['Completed'],
-                         marker_color=COLORS['success']))
+                         marker_color=COLORS['success'], text=df_workload['Completed'], textposition='inside',
+                         textfont=dict(size=14)))
     fig.add_trace(go.Bar(name='In Progress', x=df_workload['Role'], y=df_workload['In Progress'],
-                         marker_color=COLORS['warning']))
+                         marker_color=COLORS['warning'], text=df_workload['In Progress'], textposition='inside',
+                         textfont=dict(size=14)))
     fig.add_trace(go.Bar(name='Not Started', x=df_workload['Role'], y=df_workload['Not Started'],
-                         marker_color=COLORS['neutral']))
+                         marker_color=COLORS['neutral'], text=df_workload['Not Started'], textposition='inside',
+                         textfont=dict(size=14)))
     
     fig.update_layout(
         barmode='stack',
-        height=350,
-        margin=dict(l=0, r=0, t=20, b=0),
-        legend=dict(orientation='h', yanchor='bottom', y=1.02),
-        plot_bgcolor='white',
-        paper_bgcolor='white',
-        xaxis=dict(showgrid=False),
-        yaxis=dict(showgrid=True, gridcolor='#F1F5F9')
+        height=380,
+        **CHART_LAYOUT,
+        legend=dict(orientation='h', yanchor='bottom', y=1.02, font=dict(size=13)),
+        xaxis=dict(showgrid=False, **CHART_AXIS),
+        yaxis=dict(**CHART_AXIS)
     )
     
     st.plotly_chart(fig, use_container_width=True)
@@ -716,25 +768,25 @@ with tabs[1]:
 # TAB 3: RISK
 # =============================================
 with tabs[2]:
-    # Risk Metrics
+    st.markdown('<div class="section-title">⚠️ Risk Summary</div>', unsafe_allow_html=True)
+    
     open_risks = len(df_risiko[df_risiko['Status'] == 'Open'])
     mitigated = len(df_risiko[df_risiko['Status'] == 'Mitigated'])
     high_score = len(df_risiko[df_risiko['Skor'] >= 6])
     
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.markdown(kpi_card("Open Risks", open_risks, "Requires action"), unsafe_allow_html=True)
+        st.markdown(kpi_card("Open Risks", open_risks, "⚠️ Requires action"), unsafe_allow_html=True)
     with col2:
-        st.markdown(kpi_card("Mitigated", mitigated, "Under control"), unsafe_allow_html=True)
+        st.markdown(kpi_card("Mitigated", mitigated, "✓ Under control"), unsafe_allow_html=True)
     with col3:
-        st.markdown(kpi_card("High Score (≥6)", high_score, "Critical"), unsafe_allow_html=True)
+        st.markdown(kpi_card("High Score (≥6)", high_score, "Critical risks"), unsafe_allow_html=True)
     
-    # Risk Register
-    st.markdown('<div class="section-title">Risk Register</div>', unsafe_allow_html=True)
-    st.dataframe(df_risiko, use_container_width=True, hide_index=True)
+    st.markdown('<div class="section-title">📋 Risk Register</div>', unsafe_allow_html=True)
+    st.dataframe(df_risiko, use_container_width=True, hide_index=True, height=280)
     
-    # Risk Chart
-    st.markdown('<div class="section-title">Risk Distribution</div>', unsafe_allow_html=True)
+    # Risk Charts
+    st.markdown('<div class="section-title">📊 Risk Analysis</div>', unsafe_allow_html=True)
     
     col_r1, col_r2 = st.columns(2)
     
@@ -747,18 +799,14 @@ with tabs[2]:
             y=status_count.values,
             text=status_count.values,
             textposition='outside',
+            textfont=dict(size=15),
             marker_color=[COLORS['danger'] if x == 'Open' else COLORS['success'] for x in status_count.index],
             showlegend=False
         )])
         
-        fig.update_layout(
-            height=300,
-            margin=dict(l=0, r=0, t=10, b=0),
-            plot_bgcolor='white',
-            paper_bgcolor='white',
-            xaxis=dict(showgrid=False),
-            yaxis=dict(showgrid=True, gridcolor='#F1F5F9')
-        )
+        fig.update_layout(height=320, **CHART_LAYOUT,
+                         xaxis=dict(showgrid=False, **CHART_AXIS),
+                         yaxis=dict(**CHART_AXIS))
         
         st.plotly_chart(fig, use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
@@ -772,18 +820,14 @@ with tabs[2]:
             y=strategy_count.values,
             text=strategy_count.values,
             textposition='outside',
+            textfont=dict(size=15),
             marker_color=COLORS['primary'],
             showlegend=False
         )])
         
-        fig2.update_layout(
-            height=300,
-            margin=dict(l=0, r=0, t=10, b=0),
-            plot_bgcolor='white',
-            paper_bgcolor='white',
-            xaxis=dict(showgrid=False),
-            yaxis=dict(showgrid=True, gridcolor='#F1F5F9')
-        )
+        fig2.update_layout(height=320, **CHART_LAYOUT,
+                          xaxis=dict(showgrid=False, **CHART_AXIS),
+                          yaxis=dict(**CHART_AXIS))
         
         st.plotly_chart(fig2, use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
@@ -792,7 +836,9 @@ with tabs[2]:
 # TAB 4: EVM
 # =============================================
 with tabs[3]:
-    current_week_evm = st.slider("Week", 1, 12, min(6, auto_week), key="evm_week")
+    st.markdown('<div class="section-title">💰 Earned Value Management</div>', unsafe_allow_html=True)
+    
+    current_week_evm = st.slider("📅 Select Week", 1, 12, min(6, auto_week), key="evm_week")
     
     # Calculate EVM
     BAC = 500000
@@ -810,46 +856,55 @@ with tabs[3]:
     else:
         PV, EV, AC, SV, CV, SPI, CPI, EAC = 0, 0, 0, 0, 0, 0, 0, BAC
     
-    # Metrics
+    # Metrics Row 1
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         st.markdown(kpi_card("Budget (BAC)", f"Rp {BAC/1000:.0f}K", "Total allocated"), unsafe_allow_html=True)
     with col2:
-        st.markdown(kpi_card("Earned Value", f"Rp {EV/1000:.0f}K", f"{EV/BAC*100:.0f}%"), unsafe_allow_html=True)
+        st.markdown(kpi_card("Earned Value", f"Rp {EV/1000:.0f}K", f"✓ {EV/BAC*100:.0f}% complete"), unsafe_allow_html=True)
     with col3:
-        st.markdown(kpi_card("Actual Cost", f"Rp {AC/1000:.0f}K", f"{AC/BAC*100:.0f}%"), unsafe_allow_html=True)
+        st.markdown(kpi_card("Actual Cost", f"Rp {AC/1000:.0f}K", f"{AC/BAC*100:.0f}% spent"), unsafe_allow_html=True)
     with col4:
-        st.markdown(kpi_card("EAC", f"Rp {EAC/1000:.0f}K", "Forecast"), unsafe_allow_html=True)
+        st.markdown(kpi_card("EAC (Forecast)", f"Rp {EAC/1000:.0f}K", "Projected final"), unsafe_allow_html=True)
     
+    # Metrics Row 2
     col5, col6, col7 = st.columns(3)
     with col5:
-        st.markdown(kpi_card("CPI", f"{CPI:.2f}", "Efficient" if CPI >= 1 else "Over budget"), unsafe_allow_html=True)
+        cpi_status = "✓ Efficient" if CPI >= 1 else "⚠️ Over budget"
+        st.markdown(kpi_card("CPI", f"{CPI:.2f}", cpi_status), unsafe_allow_html=True)
     with col6:
-        st.markdown(kpi_card("SPI", f"{SPI:.2f}", "On time" if SPI >= 1 else "Behind"), unsafe_allow_html=True)
+        spi_status = "✓ On time" if SPI >= 1 else "⚠️ Behind"
+        st.markdown(kpi_card("SPI", f"{SPI:.2f}", spi_status), unsafe_allow_html=True)
     with col7:
-        health = "🟢 Green" if (SPI >= 0.95 and CPI >= 0.95) else "🟡 Amber" if (SPI >= 0.8 and CPI >= 0.8) else "🔴 Red"
-        st.markdown(kpi_card("Health", health, "RAG Status"), unsafe_allow_html=True)
+        if SPI >= 0.95 and CPI >= 0.95:
+            health = "🟢 Green"
+        elif SPI >= 0.8 and CPI >= 0.8:
+            health = "🟡 Amber"
+        else:
+            health = "🔴 Red"
+        st.markdown(kpi_card("Health Status", health, "RAG indicator"), unsafe_allow_html=True)
     
     # S-Curve
-    st.markdown('<div class="section-title">S-Curve</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">📈 S-Curve Analysis</div>', unsafe_allow_html=True)
     st.markdown('<div class="chart-container">', unsafe_allow_html=True)
     
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=df_evm['Minggu'], y=df_evm['PV'], mode='lines+markers',
-                             name='PV', line=dict(color=COLORS['neutral'], width=2, dash='dash')))
+                             name='Planned Value (PV)', line=dict(color=COLORS['neutral'], width=2, dash='dash'),
+                             marker=dict(size=8)))
     fig.add_trace(go.Scatter(x=df_evm_current['Minggu'], y=df_evm_current['EV'], mode='lines+markers',
-                             name='EV', line=dict(color=COLORS['primary'], width=3)))
+                             name='Earned Value (EV)', line=dict(color=COLORS['primary'], width=3),
+                             marker=dict(size=8)))
     fig.add_trace(go.Scatter(x=df_evm_current['Minggu'], y=df_evm_current['AC'], mode='lines+markers',
-                             name='AC', line=dict(color=COLORS['danger'], width=2)))
+                             name='Actual Cost (AC)', line=dict(color=COLORS['danger'], width=2),
+                             marker=dict(size=8)))
     
     fig.update_layout(
-        height=400,
-        margin=dict(l=0, r=0, t=20, b=0),
-        legend=dict(orientation='h', yanchor='bottom', y=1.02),
-        plot_bgcolor='white',
-        paper_bgcolor='white',
-        xaxis=dict(title='Week', showgrid=True, gridcolor='#F1F5F9'),
-        yaxis=dict(title='Value (Rp)', showgrid=True, gridcolor='#F1F5F9')
+        height=420,
+        **CHART_LAYOUT,
+        legend=dict(orientation='h', yanchor='bottom', y=1.02, font=dict(size=13)),
+        xaxis=dict(title='Week', **CHART_AXIS),
+        yaxis=dict(title='Value (Rp)', **CHART_AXIS)
     )
     
     st.plotly_chart(fig, use_container_width=True)
@@ -859,13 +914,15 @@ with tabs[3]:
 # TAB 5: DOCUMENTS
 # =============================================
 with tabs[4]:
+    st.markdown('<div class="section-title">📄 Document Tracker</div>', unsafe_allow_html=True)
+    
     # Filters
     st.markdown('<div class="filter-section">', unsafe_allow_html=True)
     col_f1, col_f2 = st.columns(2)
     with col_f1:
-        status_filter = st.multiselect("Status", STATUS_ORDER, default=STATUS_ORDER)
+        status_filter = st.multiselect("Filter by Status", STATUS_ORDER, default=STATUS_ORDER)
     with col_f2:
-        role_filter = st.multiselect("Role", sorted(df_dokumen['pic_role'].unique()), 
+        role_filter = st.multiselect("Filter by Role", sorted(df_dokumen['pic_role'].unique()), 
                                      default=sorted(df_dokumen['pic_role'].unique()))
     st.markdown('</div>', unsafe_allow_html=True)
     
@@ -875,42 +932,51 @@ with tabs[4]:
         (df_dokumen['pic_role'].isin(role_filter))
     ]
     
-    st.caption(f"Showing {len(df_filtered)} of {len(df_dokumen)} documents")
+    st.markdown(f"**Showing {len(df_filtered)} of {len(df_dokumen)} documents**")
     
     # Table
     display_cols = ['document', 'phase', 'pic_role', 'target_week', 'status', 'progress']
     df_display = df_filtered[display_cols].copy()
     df_display['progress'] = df_display['progress'].apply(lambda x: f"{x:.0f}%")
     
-    st.dataframe(df_display, use_container_width=True, hide_index=True)
+    st.dataframe(df_display, use_container_width=True, hide_index=True, height=400)
 
 # =============================================
 # TAB 6: LOG
 # =============================================
 with tabs[5]:
+    st.markdown('<div class="section-title">📝 Activity Log</div>', unsafe_allow_html=True)
+    
     if not data_loaded or df_log.empty:
-        st.markdown(alert_box("No log data available", "warning"), unsafe_allow_html=True)
+        st.markdown(alert_box("No log data available. Submit updates via Google Form to see activity here.", "warning"), 
+                   unsafe_allow_html=True)
     else:
         max_week = int(df_log["week_no"].max())
-        week_pick = st.multiselect("Filter Week", list(range(1, max_week + 1)), default=[max_week])
+        week_pick = st.multiselect("📅 Filter by Week", list(range(1, max_week + 1)), default=[max_week])
         
         df_view = df_log[df_log["week_no"].isin(week_pick)]
         
         col1, col2, col3 = st.columns(3)
         with col1:
-            st.markdown(kpi_card("Updates", len(df_view), "Filtered"), unsafe_allow_html=True)
+            st.markdown(kpi_card("Updates", len(df_view), "Filtered view"), unsafe_allow_html=True)
         with col2:
             st.markdown(kpi_card("Documents", df_view["document"].nunique(), "Updated"), unsafe_allow_html=True)
         with col3:
             st.markdown(kpi_card("Total Logs", len(df_log), "All time"), unsafe_allow_html=True)
         
-        st.markdown('<div class="section-title">Activity Log</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">📋 Log Entries</div>', unsafe_allow_html=True)
         
         show_cols = [c for c in ["timestamp", "week_no", "document", "status", "progress", "pic_role"] 
                      if c in df_view.columns]
         st.dataframe(df_view.sort_values("timestamp", ascending=False)[show_cols], 
-                    use_container_width=True, hide_index=True)
+                    use_container_width=True, hide_index=True, height=400)
 
-# Footer
+# =============================================
+# FOOTER
+# =============================================
 st.markdown("---")
-st.caption("Dashboard © 2025 | Data refreshed from Google Sheets")
+st.markdown("""
+<div style="text-align: center; color: #64748B; font-size: 0.95rem; padding: 1rem 0;">
+    📊 <strong>Project Monitoring Dashboard</strong> | Office Supplies Management System | © 2025
+</div>
+""", unsafe_allow_html=True)
